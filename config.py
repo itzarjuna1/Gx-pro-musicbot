@@ -6,23 +6,23 @@ from pyrogram import filters
 
 load_dotenv()
 
-API_ID = int(getenv("API_ID", "20346025"))
-API_HASH = getenv("API_HASH", "d34558796860a173cb5c918968fe85a0")
+API_ID = int(getenv("API_ID", "12565317"))
+API_HASH = getenv("API_HASH", "de3e1a800e0ebdff1031232be6c38814")
 BOT_TOKEN = getenv("BOT_TOKEN", "8063486217:AAFj2ZIIk8ZD_8pUupmM2KcnGi7bZDPPRX0")
 MONGO_DB_URI = getenv("MONGO_DB_URI", "mongodb+srv://knight4563:knight4563@cluster0.a5br0se.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 DURATION_LIMIT_MIN = int(getenv("DURATION_LIMIT", 1000000))
-LOGGER_ID = int(getenv("LOGGER_ID", "-1002507632106"))
-OWNER_ID = int(getenv("OWNER_ID", "6514377146"))
+LOGGER_ID = int(getenv("LOGGER_ID", "-1002881119599"))
+OWNER_ID = int(getenv("OWNER_ID", "7926944005"))
 
 HEROKU_APP_NAME = getenv("HEROKU_APP_NAME")
 HEROKU_API_KEY = getenv("HEROKU_API_KEY")
 
-UPSTREAM_REPO = getenv("UPSTREAM_REPO", "https://github.com/Gxinfinity/Gx-pro-music.git")
+UPSTREAM_REPO = getenv("UPSTREAM_REPO", "https://github.com/itzarjuna1/Gx-pro-musicbot.git")
 UPSTREAM_BRANCH = getenv("UPSTREAM_BRANCH", "master")
 GIT_TOKEN = getenv("GIT_TOKEN", None)
 
 SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/dark_x_knight_musiczz_support")
-SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/+095AOnkZH4MzNTU1")
+SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/dark_knight_support")
 
 AUTO_LEAVING_ASSISTANT = bool(getenv("AUTO_LEAVING_ASSISTANT", True))
 
@@ -34,7 +34,7 @@ PLAYLIST_FETCH_LIMIT = int(getenv("PLAYLIST_FETCH_LIMIT", 25))
 TG_AUDIO_FILESIZE_LIMIT = int(getenv("TG_AUDIO_FILESIZE_LIMIT", 104857600))
 TG_VIDEO_FILESIZE_LIMIT = int(getenv("TG_VIDEO_FILESIZE_LIMIT", 1073741824))
 
-STRING1 = getenv("STRING_SESSION", "BQE2dKkAq8eVFOn585XMnxkmqhqyVKVhE4wg_ix6r173v35IpTFwtSfHuUhmpLdSQJ1K9cD1lxBSnlpl4ZJAqJVjatvlUNcd6kyIzY3ZB1ApA4ChRui-WTKjoYf_qm1DuGNTwthz8ib_hGQJcG8vBoR1g6lpPqKpQtr3N3TiDmH-sVhBkpeLqCWZb003MrrKBhX9ZgknVnGTFb-BrrzNPhdV7sa1akRA7UDTlrkuQUnRMk1DwjyHhMR51amMNz76zEJM_1effLR6lzNz4oHrThHuq3_DWJLTdtwl2ow0Fb_tM4hz3RVf0chOzJSb1ZChvd0VFJovrAPuLn1IVfnXE9jBOEShagAAAAGrTgSxAA")
+STRING1 = getenv("STRING_SESSION", "BQC_u0UAgry1rt397-lBLrs0iTIo6qqrWuhWTlSpEJ8wofA2vhtV89iegnE-d-EwkAomjLrKQFxhhDS6WZZzyoOXOvF3DyWT8sltXMoB6w9654wEakOMJ1Q32Vmumxwi-R_rL0z0Gk6JQ5WQ7oC2msJIA0Vpo1Y_XBcHrlUCt0a9uuDlUnN0tfLQmQEW12wpODw_Fj_TkxCSH5LAIsvxoVmVoRab1A7qfuDpkpmeZq5RLG7vlCqCLv7ldVOugg1ka81mpki9lLwJ2l8PxHioVtomgTu5OdLTbQK-xpyqEqyEhJH_2cC6kisM2Q08g0i-6a7RZJ4MK5CXxTvIKmJyDb-AznTp7wAAAAHlOtF5AA")
 STRING2 = getenv("STRING_SESSION2", None)
 STRING3 = getenv("STRING_SESSION3", None)
 STRING4 = getenv("STRING_SESSION4", None)
@@ -47,18 +47,18 @@ votemode = {}
 autoclean = []
 confirmer = {}
 
-START_IMG_URL = getenv("START_IMG_URL", "https://te.legra.ph/file/25efe6aa029c6baea73ea.jpg")
-PING_IMG_URL = getenv("PING_IMG_URL", "https://te.legra.ph/file/b8a0c1a00db3e57522b53.jpg")
-PLAYLIST_IMG_URL = "https://te.legra.ph/file/4ec5ae4381dffb039b4ef.jpg"
-STATS_IMG_URL = "https://te.legra.ph/file/e906c2def5afe8a9b9120.jpg"
-TELEGRAM_AUDIO_URL = "https://te.legra.ph/file/6298d377ad3eb46711644.jpg"
-TELEGRAM_VIDEO_URL = "https://te.legra.ph/file/6298d377ad3eb46711644.jpg"
-STREAM_IMG_URL = "https://te.legra.ph/file/bd995b032b6bd263e2cc9.jpg"
-SOUNCLOUD_IMG_URL = "https://te.legra.ph/file/bb0ff85f2dd44070ea519.jpg"
-YOUTUBE_IMG_URL = "https://te.legra.ph/file/6298d377ad3eb46711644.jpg"
-SPOTIFY_ARTIST_IMG_URL = "https://te.legra.ph/file/37d163a2f75e0d3b403d6.jpg"
-SPOTIFY_ALBUM_IMG_URL = "https://te.legra.ph/file/b35fd1dfca73b950b1b05.jpg"
-SPOTIFY_PLAYLIST_IMG_URL = "https://te.legra.ph/file/95b3ca7993bbfaf993dcb.jpg"
+START_IMG_URL = getenv("START_IMG_URL", "https://files.catbox.moe/8v3sw6.jpg")
+PING_IMG_URL = getenv("PING_IMG_URL", "https://files.catbox.moe/8v3sw6.jpg")
+PLAYLIST_IMG_URL = "https://files.catbox.moe/8v3sw6.jpg"
+STATS_IMG_URL = "https://files.catbox.moe/8v3sw6.jpg"
+TELEGRAM_AUDIO_URL = "https://files.catbox.moe/8v3sw6.jpg"
+TELEGRAM_VIDEO_URL = "https://files.catbox.moe/8v3sw6.jpg"
+STREAM_IMG_URL = "https://files.catbox.moe/8v3sw6.jpg"
+SOUNCLOUD_IMG_URL = "https://files.catbox.moe/8v3sw6.jpg"
+YOUTUBE_IMG_URL = "https://files.catbox.moe/8v3sw6.jpg"
+SPOTIFY_ARTIST_IMG_URL = "https://files.catbox.moe/8v3sw6.jpg"
+SPOTIFY_ALBUM_IMG_URL = "https://files.catbox.moe/8v3sw6.jpg"
+SPOTIFY_PLAYLIST_IMG_URL = "https://files.catbox.moe/8v3sw6.jpg"
 
 def time_to_seconds(time):
     stringt = str(time)
