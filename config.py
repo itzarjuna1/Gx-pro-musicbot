@@ -6,18 +6,18 @@ from pyrogram import filters
 
 load_dotenv()
 
-API_ID = int(getenv("API_ID", ""))
-API_HASH = getenv("API_HASH", "")
-BOT_TOKEN = getenv("BOT_TOKEN", "")
-MONGO_DB_URI = getenv("MONGO_DB_URI", "")
+API_ID = int(getenv("API_ID", "20229312"))
+API_HASH = getenv("API_HASH", "a28b36db7e0f7a1f8870c318c8371c1c")
+BOT_TOKEN = getenv("BOT_TOKEN", "7303211754:AAF3uNJcONcyR80mArPtoxnDNF7w_af1JWc")
+MONGO_DB_URI = getenv("MONGO_DB_URI", "mongodb+srv://knight4563:knight4563@cluster0.a5br0se.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 DURATION_LIMIT_MIN = int(getenv("DURATION_LIMIT", 1000000))
-LOGGER_ID = int(getenv("LOGGER_ID", "-"))
-OWNER_ID = int(getenv("OWNER_ID", ""))
+LOGGER_ID = int(getenv("LOGGER_ID", "-1002643544937"))
+OWNER_ID = int(getenv("OWNER_ID", "8116802522"))
 
 HEROKU_APP_NAME = getenv("HEROKU_APP_NAME")
 HEROKU_API_KEY = getenv("HEROKU_API_KEY")
 
-UPSTREAM_REPO = getenv("UPSTREAM_REPO", "")
+UPSTREAM_REPO = getenv("UPSTREAM_REPO", "https://github.com/itzarjuna1/Gx-pro-musicbot")
 UPSTREAM_BRANCH = getenv("UPSTREAM_BRANCH", "master")
 GIT_TOKEN = getenv("GIT_TOKEN", None)
 
@@ -34,7 +34,7 @@ PLAYLIST_FETCH_LIMIT = int(getenv("PLAYLIST_FETCH_LIMIT", 25))
 TG_AUDIO_FILESIZE_LIMIT = int(getenv("TG_AUDIO_FILESIZE_LIMIT", 104857600))
 TG_VIDEO_FILESIZE_LIMIT = int(getenv("TG_VIDEO_FILESIZE_LIMIT", 1073741824))
 
-STRING1 = getenv("STRING_SESSION", "")
+STRING1 = getenv("STRING_SESSION", "BQE0rMAAC32vQll9IV9I_algH_VP_iElMAxF10cE_sP0-gnGDL4k7aNQpRiAcf3vcUSVVOrM98UQjNdLDd6OYYqzT5PMpSCeq4o0J0Z_xnyKT1fqE3m1B08UiGfN2ggIM_BPH5OtFRbuxD8Z5rWpdm9hfyh8CHb8ceOztOo81mPnQyRFKE-JkeQsWEgIl30iQs92wahtLW8YSmT1T1tt_LarX9xyyHGMuJOPgYvgLO3emV77HbKT-mNjo-hrJs0Z4yfQFnsFiQ9Lp017OyipnYMIegwhXZXW4qN90dl7BY_hXA5mkSzNQoV6tDh4Y1MlRkh_ngFtLbIuPMGkSo7c_e9CjPjDswAAAAHK6f3UAA")
 STRING2 = getenv("STRING_SESSION2", None)
 STRING3 = getenv("STRING_SESSION3", None)
 STRING4 = getenv("STRING_SESSION4", None)
