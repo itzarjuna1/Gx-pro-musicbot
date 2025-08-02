@@ -21,7 +21,7 @@ UPSTREAM_REPO = getenv("UPSTREAM_REPO", "https://github.com/itzarjuna1/Gx-pro-mu
 UPSTREAM_BRANCH = getenv("UPSTREAM_BRANCH", "master")
 GIT_TOKEN = getenv("GIT_TOKEN", None)
 
-SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/dark_x_knight_musiczz_support")
+SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/+wD3_dWkCkSYzMWE1")
 SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/+SKnKWWIEIDw3MGEx")
 
 AUTO_LEAVING_ASSISTANT = bool(getenv("AUTO_LEAVING_ASSISTANT", True))
