@@ -7,9 +7,10 @@ from pyrogram import Client
 from pyrogram.types import InlineKeyboardMarkup
 from pytgcalls import PyTgCalls, StreamType
 from pytgcalls.exceptions import (
-    AlreadyJoinedError,
     NoActiveGroupCall,
-    TelegramServerError,
+    AlreadyJoinedError,
+    NotInGroupCallError,
+    GroupCallNotFoundError,
 )
 from pytgcalls.types import Update
 from pytgcalls.types.input_stream import AudioPiped, AudioVideoPiped
