@@ -6,25 +6,25 @@ from pyrogram import filters
 
 load_dotenv()
 
-API_ID = int(getenv("API_ID", ""))
-API_HASH = getenv("API_HASH", "")
+API_ID = int(getenv("API_ID", "35279715"))
+API_HASH = getenv("API_HASH", "b4c339216397b5941d88c8617d2dc12b")
 BOT_TOKEN = getenv("BOT_TOKEN", "")
-MONGO_DB_URI = getenv("MONGO_DB_URI", "")
+MONGO_DB_URI = getenv("MONGO_DB_URI", "mongodb+srv://knight4563:knight4563@cluster0.a5br0se.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 DURATION_LIMIT_MIN = int(getenv("DURATION_LIMIT", 1000000))
-LOGGER_ID = int(getenv("LOGGER_ID", "-1002823976818"))
-OWNER_ID = int(getenv("OWNER_ID", "8473985518"))
+LOGGER_ID = int(getenv("LOGGER_ID", "-1003468243393"))
+OWNER_ID = int(getenv("OWNER_ID", "7651303468"))
 
 HEROKU_APP_NAME = getenv("HEROKU_APP_NAME")
 HEROKU_API_KEY = getenv("HEROKU_API_KEY")
 
-UPSTREAM_REPO = getenv("UPSTREAM_REPO", "")
+UPSTREAM_REPO = getenv("UPSTREAM_REPO", "https://github.com/itzarjuna1/Gx-pro-musicbot")
 UPSTREAM_BRANCH = getenv("UPSTREAM_BRANCH", "master")
 GIT_TOKEN = getenv("GIT_TOKEN", None)
 
-SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/+wD3_dWkCkSYzMWE1")
-SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/+SKnKWWIEIDw3MGEx")
+SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/dark_musictm")
+SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/snowy_support")
 
-AUTO_LEAVING_ASSISTANT = bool(getenv("AUTO_LEAVING_ASSISTANT", True))
+AUTO_LEAVING_ASSISTANT = bool(getenv("AUTO_LEAVING_ASSISTANT", false))
 
 SPOTIFY_CLIENT_ID = getenv("SPOTIFY_CLIENT_ID", None)
 SPOTIFY_CLIENT_SECRET = getenv("SPOTIFY_CLIENT_SECRET", None)
