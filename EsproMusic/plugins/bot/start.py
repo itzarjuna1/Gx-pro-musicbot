@@ -106,7 +106,7 @@ async def start_gp(client, message: Message, _):
     uptime = int(time.time() - _boot_)
     await message.reply_photo(
         photo=config.START_IMG_URL,
-        has_spoiler=True
+        has_spoiler=True,
         caption=_["start_1"].format(app.mention, get_readable_time(uptime)),
         reply_markup=InlineKeyboardMarkup(out),
     )
