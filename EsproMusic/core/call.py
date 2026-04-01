@@ -5,16 +5,12 @@ from typing import Union
 
 from pyrogram import Client
 from pyrogram.types import InlineKeyboardMarkup
-from pytgcalls import PyTgCalls, StreamType
-from pytgcalls.exceptions import (
-    NoActiveGroupCall,
-    AlreadyJoinedError,
-    NotInGroupCallError,
-    GroupCallNotFoundError,
-)
-from pytgcalls.types import Update
-from pytgcalls.types.input_stream import AudioPiped, AudioVideoPiped
-from pytgcalls.types.input_stream.quality import HighQualityAudio, MediumQualityVideo
+from ntgcalls import TelegramServerError
+from pyrogram import Client
+from pyrogram.types import InlineKeyboardMarkup
+from pytgcalls import PyTgCalls
+from pytgcalls.exceptions import AlreadyJoinedError, NoActiveGroupCall
+from pytgcalls.types import AudioQuality, MediaStream, Update, VideoQuality
 from pytgcalls.types.stream import StreamAudioEnded
 
 import config
