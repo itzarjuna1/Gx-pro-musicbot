@@ -7,22 +7,22 @@ from pytgcalls.exceptions import NoActiveGroupCall
 
 import config
 from config import BANNED_USERS, lyrical
-from Oneforall import Apple, Resso, SoundCloud, Spotify, Telegram, YouTube, app
-from Oneforall.core.call import Hotty
-from Oneforall.utils import seconds_to_min, time_to_seconds
-from Oneforall.utils.channelplay import get_channeplayCB
-from Oneforall.utils.decorators.language import languageCB
-from Oneforall.utils.decorators.play import PlayWrapper
-from Oneforall.utils.formatters import formats
-from Oneforall.utils.inline import (
+from EsproMusic import Apple, Resso, SoundCloud, Spotify, Telegram, YouTube, app
+from EsproMusic.core.call import Loy
+from EsproMusic.utils import seconds_to_min, time_to_seconds
+from EsproMusic.utils.channelplay import get_channeplayCB
+from EsproMusic.utils.decorators.language import languageCB
+from EsproMusic.utils.decorators.play import PlayWrapper
+from EsproMusic.utils.formatters import formats
+from EsproMusic import (
     botplaylist_markup,
     livestream_markup,
     playlist_markup,
     slider_markup,
     track_markup,
 )
-from Oneforall.utils.logger import play_logs
-from Oneforall.utils.stream.stream import stream
+from EsproMusic import play_logs
+from EsproMusic.utils.stream.stream import stream
 
 
 @app.on_message(
@@ -288,7 +288,7 @@ async def play_commnd(
             return await mystic.delete()
         else:
             try:
-                await Hotty.stream_call(url)
+                await Loy.stream_call(url)
             except NoActiveGroupCall:
                 await mystic.edit_text(_["black_9"])
                 return await app.send_message(
