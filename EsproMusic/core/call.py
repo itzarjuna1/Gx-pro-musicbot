@@ -12,6 +12,7 @@ from pytgcalls import PyTgCalls
 from pytgcalls.exceptions import AlreadyJoinedError, NoActiveGroupCall
 from pytgcalls.types import AudioQuality, MediaStream, Update, VideoQuality
 from pytgcalls.types.stream import StreamAudioEnded
+from pytgcalls.types.input_stream import AudioPiped, AudioVideoPiped
 
 import config
 from EsproMusic import LOGGER, YouTube, app
