@@ -7,6 +7,7 @@ import string
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InputMediaPhoto, Message
 from pytgcalls.exceptions import NoActiveGroupCall
+from pytgcalls.types.input_stream import AudioPiped
 
 import config
 from EsproMusic import Apple, Resso, SoundCloud, Spotify, Telegram, YouTube, app
