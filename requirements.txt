@@ -1,6 +1,6 @@
 telethon>=1.26.0
 pytgcalls==3.0.0.dev24
-ntgcalls==1.2.9
+ntgcalls==2.0.9
 pyrogram>=2.1.0
 pyromod
 gTTS
