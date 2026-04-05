@@ -213,6 +213,20 @@ async def autoend_off():
     chat_id = 1234
     await autoenddb.delete_one({"chat_id": chat_id})
 
+async def is_music_playing(chat_id: int) -> bool:
+    mode = pause.get(chat_id)
+    if not mode:
+        return False
+    return mode
+
+
+async def music_on(chat_id: int):
+    pause[chat_id] = True
+
+
+async def music_off(chat_id: int):
+    pause[chat_id] = False
+
 
 async def get_loop(chat_id: int) -> int:
     lop = loop.get(chat_id)
