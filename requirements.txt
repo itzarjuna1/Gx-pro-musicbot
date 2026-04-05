@@ -20,3 +20,15 @@ opencv-python
 pillow==9.5.0
 psutil
 pytz
+pyyaml
+requests
+speedtest-cli
+spotipy
+tgcrypto
+telegraph 
+unidecode
+youtube-search
+youtube-search-python
+py-yt-search
+yt-dlp
+# =============
