@@ -1,159 +1,209 @@
 import asyncio
-
 from pyrogram import Client, filters
-from pyrogram.types import Message
-
-from oldpyro import Client as Client1
-
+from pyrogram.errors import (
+    ApiIdInvalid,
+    FloodWait,
+    PhoneCodeExpired,
+    PhoneCodeInvalid,
+    PhoneNumberInvalid,
+    SessionPasswordNeeded,
+    PasswordHashInvalid,
+)
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from telethon import TelegramClient
 from telethon.sessions import StringSession
+from telethon.errors import (
+    ApiIdInvalidError,
+    PasswordHashInvalidError,
+    PhoneCodeExpiredError,
+    PhoneCodeInvalidError,
+    PhoneNumberInvalidError,
+    SessionPasswordNeededError,
+)
+from telethon.tl.functions.channels import JoinChannelRequest
+from pyromod.listen.listen import ListenerTimeout
 
-from EsproMusic import app
-
-
-# ─────────────────────────────────────────────
-# ʀᴇsᴛʀɪᴄᴛ ɢʀᴏᴜᴘ ᴜsᴀɢᴇ
-# ─────────────────────────────────────────────
-async def not_private(message: Message):
-    return await message.reply_text(
-        "» ᴘʟᴇᴀsᴇ sᴛᴀʀᴛ ᴍᴇ ɪɴ ᴅᴍ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ sᴛʀɪɴɢ sᴇssɪᴏɴ.\n\n"
-        "☠ ᴜsᴇ /genstring ɪɴ ᴘʀɪᴠᴀᴛᴇ."
-    )
-
-
-# ─────────────────────────────────────────────
-# sᴛᴀʀᴛ ᴄᴏᴍᴍᴀɴᴅ
-# ─────────────────────────────────────────────
-@app.on_message(filters.command("genstring") & ~filters.private)
-async def genstring_group(_, message: Message):
-    return await not_private(message)
+from config import SUPPORT_CHAT
+from EsproString import Loy
+from EsproString.utils import retry_key
 
 
-@app.on_message(filters.command("genstring") & filters.private)
-async def genstring_home(_, message: Message):
+@Client.on_message(filters.private & filters.command("genstring"))
+async def gen_string_cmd(client, message):
     await message.reply_text(
-        "˹ᴇʀʏx ꭙ sᴛʀɪɴɢ ɢᴇɴ˼ ♪\n\n"
-        "» ᴄʜᴏᴏsᴇ sᴇssɪᴏɴ ᴛʏᴘᴇ :\n\n"
-        "• /pyro  → ᴩʏʀᴏɢʀᴀᴍ v2\n"
-        "• /tele  → ᴛᴇʟᴇᴛʜᴏɴ\n"
-        "• /pyro1 → ᴩʏʀᴏɢʀᴀᴍ v1\n\n"
-        "☠ ɢᴇɴᴇʀᴀᴛᴇ ɪɴ ᴩʀɪᴠᴀᴛᴇ ᴏɴʟʏ."
+        "» ʜᴇʏ! ᴜsᴇ /start ɪɴ ᴅᴍ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ʏᴏᴜʀ sᴛʀɪɴɢ sᴇssɪᴏɴ.",
+        reply_markup=retry_key,
     )
 
 
-# ─────────────────────────────────────────────
-# ᴄᴏʀᴇ ʟᴏɢɪᴄ
-# ─────────────────────────────────────────────
-async def gen_session(message, user_id: int, telethon=False, old_pyro=False):
+async def gen_session(message, user_id: int, telethon: bool = False):
     if telethon:
         ty = "ᴛᴇʟᴇᴛʜᴏɴ"
-    elif old_pyro:
-        ty = "ᴩʏʀᴏɢʀᴀᴍ v1"
     else:
         ty = "ᴩʏʀᴏɢʀᴀᴍ v2"
 
-    await message.reply_text(f"» sᴛᴀʀᴛɪɴɢ {ty} sᴇssɪᴏɴ...")
+    await message.reply_text(f"» ᴛʀʏɪɴɢ ᴛᴏ sᴛᴀʀᴛ {ty} sᴇssɪᴏɴ ɢᴇɴᴇʀᴀᴛᴏʀ...")
 
     try:
-        api_id = await app.ask(message.chat.id, "» ᴇɴᴛᴇʀ ᴀᴘɪ ɪᴅ :", timeout=300)
+        api_id = await Loy.ask(
+            identifier=(message.chat.id, user_id, None),
+            text="» ᴘʟᴇᴀsᴇ ᴇɴᴛᴇʀ ʏᴏᴜʀ ᴀᴘɪ ɪᴅ ᴛᴏ ᴘʀᴏᴄᴇᴇᴅ :",
+            filters=filters.text,
+            timeout=300,
+        )
+    except ListenerTimeout:
+        return await Loy.send_message(
+            user_id,
+            "» ᴛɪᴍᴇᴅ ʟɪᴍɪᴛ ʀᴇᴀᴄʜᴇᴅ ᴏғ 5 ᴍɪɴᴜᴛᴇs.\n\nᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ.",
+            reply_markup=retry_key,
+        )
+    if await cancelled(api_id):
+        return
+    try:
         api_id = int(api_id.text)
-    except:
-        return await message.reply_text("» ɪɴᴠᴀʟɪᴅ ᴀᴘɪ ɪᴅ.")
+    except ValueError:
+        return await Loy.send_message(
+            user_id,
+            "» ᴀᴘɪ ɪᴅ ɪs ɪɴᴠᴀʟɪᴅ.\n\nᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ.",
+            reply_markup=retry_key,
+        )
 
     try:
-        api_hash = await app.ask(message.chat.id, "» ᴇɴᴛᴇʀ ᴀᴘɪ ʜᴀsʜ :", timeout=300)
-        api_hash = api_hash.text
-    except:
-        return await message.reply_text("» ɪɴᴠᴀʟɪᴅ ᴀᴘɪ ʜᴀsʜ.")
+        api_hash = await Loy.ask(
+            identifier=(message.chat.id, user_id, None),
+            text="» ᴘʟᴇᴀsᴇ ᴇɴᴛᴇʀ ʏᴏᴜʀ ᴀᴘɪ ʜᴀsʜ ᴛᴏ ᴘʀᴏᴄᴇᴇᴅ :",
+            filters=filters.text,
+            timeout=300,
+        )
+    except ListenerTimeout:
+        return await Loy.send_message(
+            user_id,
+            "» ᴛɪᴍᴇᴅ ʟɪᴍɪᴛ ʀᴇᴀᴄʜᴇᴅ ᴏғ 5 ᴍɪɴᴜᴛᴇs.\n\nᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ.",
+            reply_markup=retry_key,
+        )
+    if await cancelled(api_hash):
+        return
+    api_hash = api_hash.text
+
+    if len(api_hash) < 30:
+        return await Loy.send_message(
+            user_id,
+            "» ᴀᴘɪ ʜᴀsʜ ɪs ɪɴᴠᴀʟɪᴅ.\n\nᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ.",
+            reply_markup=retry_key,
+        )
 
     try:
-        phone = await app.ask(message.chat.id, "» ᴇɴᴛᴇʀ ᴘʜᴏɴᴇ (+91...):", timeout=300)
-        phone = phone.text
-    except:
-        return await message.reply_text("» ɪɴᴠᴀʟɪᴅ ɴᴜᴍʙᴇʀ.")
+        phone_number = await Loy.ask(
+            identifier=(message.chat.id, user_id, None),
+            text="» ᴘʟᴇᴀsᴇ ᴇɴᴛᴇʀ ʏᴏᴜʀ ᴘʜᴏɴᴇ ɴᴜᴍʙᴇʀ :",
+            filters=filters.text,
+            timeout=300,
+        )
+    except ListenerTimeout:
+        return await Loy.send_message(
+            user_id,
+            "» ᴛɪᴍᴇᴅ ʟɪᴍɪᴛ ʀᴇᴀᴄʜᴇᴅ ᴏғ 5 ᴍɪɴᴜᴛᴇs.\n\nᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ.",
+            reply_markup=retry_key,
+        )
+    if await cancelled(phone_number):
+        return
+    phone_number = phone_number.text
 
-    await message.reply_text("» sᴇɴᴅɪɴɢ ᴏᴛᴘ...")
-
-    if telethon:
-        client = TelegramClient(StringSession(), api_id, api_hash)
-    elif old_pyro:
-        client = Client1(":memory:", api_id=api_id, api_hash=api_hash)
-    else:
-        client = Client(name="eryx", api_id=api_id, api_hash=api_hash, in_memory=True)
-
+    await Loy.send_message(user_id, "» sᴇɴᴅɪɴɢ ᴏᴛᴩ ᴛᴏ ʏᴏᴜʀ ɴᴜᴍʙᴇʀ...")
+    client = Client(name="EryxStringGen", api_id=api_id, api_hash=api_hash, in_memory=True)
     await client.connect()
 
     try:
-        if telethon:
-            code = await client.send_code_request(phone)
-        else:
-            code = await client.send_code(phone)
-    except Exception as e:
-        return await message.reply_text(f"» ᴇʀʀᴏʀ : {e}")
-
-    try:
-        otp = await app.ask(message.chat.id, "» ᴇɴᴛᴇʀ ᴏᴛᴘ :", timeout=600)
-        otp = otp.text.replace(" ", "")
-    except:
-        return await message.reply_text("» ᴏᴛᴘ ᴛɪᴍᴇᴏᴜᴛ.")
-
-    try:
-        if telethon:
-            await client.sign_in(phone, otp)
-        else:
-            await client.sign_in(phone, code.phone_code_hash, otp)
-    except Exception as e:
-        return await message.reply_text(f"» ʟᴏɢɪɴ ғᴀɪʟᴇᴅ : {e}")
-
-    try:
-        if telethon:
-            string = client.session.save()
-        else:
-            string = await client.export_session_string()
-
-        await client.send_message(
-            "me",
-            f"ʜᴇʀᴇ ɪs ʏᴏᴜʀ {ty} sᴛʀɪɴɢ sᴇssɪᴏɴ\n\n<code>{string}</code>",
-            parse_mode="html",
+        code = await client.send_code(phone_number)
+        await asyncio.sleep(1)
+    except FloodWait as f:
+        return await Loy.send_message(
+            user_id,
+            f"» ғʟᴏᴏᴅ ᴡᴀɪᴛ: ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ {f.value or f.x} sᴇᴄᴏɴᴅs.",
+            reply_markup=retry_key,
         )
-    except:
-        pass
+    except ApiIdInvalid:
+        return await Loy.send_message(
+            user_id,
+            "» ᴀᴘɪ ɪᴅ ᴏʀ ʜᴀsʜ ɪs ɪɴᴠᴀʟɪᴅ.",
+            reply_markup=retry_key,
+        )
+    except PhoneNumberInvalid:
+        return await Loy.send_message(
+            user_id,
+            "» ᴘʜᴏɴᴇ ɴᴜᴍʙᴇʀ ɪɴᴠᴀʟɪᴅ.",
+            reply_markup=retry_key,
+        )
 
+    try:
+        otp = await Loy.ask(
+            identifier=(message.chat.id, user_id, None),
+            text=f"ᴘʟᴇᴀsᴇ ᴇɴᴛᴇʀ ᴛʜᴇ ᴏᴛᴩ sᴇɴᴛ ᴛᴏ {phone_number}.",
+            filters=filters.text,
+            timeout=600,
+        )
+        if await cancelled(otp):
+            return
+    except ListenerTimeout:
+        return await Loy.send_message(
+            user_id,
+            "» ᴛɪᴍᴇ ʟɪᴍɪᴛ ʀᴇᴀᴄʜᴇᴅ ᴏғ 10 ᴍɪɴᴜᴛᴇs.",
+            reply_markup=retry_key,
+        )
+
+    otp = otp.text.replace(" ", "")
+    try:
+        await client.sign_in(phone_number, code.phone_code_hash, otp)
+    except (PhoneCodeInvalid, PhoneCodeExpired):
+        return await Loy.send_message(
+            user_id,
+            "» ᴏᴛᴩ ɪs ᴡʀᴏɴɢ ᴏʀ ᴇxᴩɪʀᴇᴅ.",
+            reply_markup=retry_key,
+        )
+    except SessionPasswordNeeded:
+        pwd = await Loy.ask(
+            identifier=(message.chat.id, user_id, None),
+            text="» ᴇɴᴛᴇʀ ʏᴏᴜʀ ᴛᴡᴏ sᴛᴇᴘ ᴘᴀssᴡᴏʀᴅ :",
+            filters=filters.text,
+            timeout=300,
+        )
+        await client.check_password(password=pwd.text)
+
+    string_session = await client.export_session_string()
+    txt = (
+        f"ʜᴇʀᴇ ɪs ʏᴏᴜʀ {ty} sᴛʀɪɴɢ sᴇssɪᴏɴ\n\n"
+        f"<code>{string_session}</code>\n\n"
+        f"ᴀ sᴛʀɪɴɢ ɢᴇɴᴇʀᴀᴛᴏʀ ʙᴏᴛ ʙʏ <a href={SUPPORT_CHAT}>ᴇʀʏx sᴜᴘᴘᴏʀᴛ</a>"
+    )
+    await client.send_message("me", txt, disable_web_page_preview=True, parse_mode="html")
+    await client.join_chat("EsproUpdate")
     await client.disconnect()
 
-    await message.reply_text(
-        "» sᴜᴄᴄᴇssғᴜʟʟʏ ɢᴇɴᴇʀᴀᴛᴇᴅ.\n\nᴄʜᴇᴄᴋ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs."
+    await Loy.send_message(
+        chat_id=user_id,
+        text=f"sᴜᴄᴄᴇssғᴜʟʟʏ ɢᴇɴᴇʀᴀᴛᴇᴅ ʏᴏᴜʀ {ty} sᴛʀɪɴɢ sᴇssɪᴏɴ.\n\nᴄʜᴇᴄᴋ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs.",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text="sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs",
+                        url=f"tg://openmessage?user_id={user_id}",
+                    )
+                ]
+            ]
+        ),
     )
 
 
-# ─────────────────────────────────────────────
-# ᴄᴏᴍᴍᴀɴᴅs (ᴅᴍ ᴏɴʟʏ)
-# ─────────────────────────────────────────────
-@app.on_message(filters.command("pyro") & ~filters.private)
-async def pyro_group(_, message: Message):
-    return await not_private(message)
-
-
-@app.on_message(filters.command("tele") & ~filters.private)
-async def tele_group(_, message: Message):
-    return await not_private(message)
-
-
-@app.on_message(filters.command("pyro1") & ~filters.private)
-async def pyro1_group(_, message: Message):
-    return await not_private(message)
-
-
-@app.on_message(filters.command("pyro") & filters.private)
-async def pyro(_, message: Message):
-    await gen_session(message, message.from_user.id)
-
-
-@app.on_message(filters.command("tele") & filters.private)
-async def tele(_, message: Message):
-    await gen_session(message, message.from_user.id, telethon=True)
-
-
-@app.on_message(filters.command("pyro1") & filters.private)
-async def pyro1(_, message: Message):
-    await gen_session(message, message.from_user.id, old_pyro=True)
+async def cancelled(message):
+    if "/cancel" in message.text:
+        await message.reply_text(
+            "» ᴄᴀɴᴄᴇʟʟᴇᴅ ᴛʜᴇ sᴛʀɪɴɢ ɢᴇɴᴇʀᴀᴛɪᴏɴ.", reply_markup=retry_key
+        )
+        return True
+    elif message.text.startswith("/"):
+        await message.reply_text(
+            "» ᴄᴀɴᴄᴇʟʟᴇᴅ ᴛʜᴇ sᴛʀɪɴɢ ɢᴇɴᴇʀᴀᴛɪᴏɴ.", reply_markup=retry_key
+        )
+        return True
+    return False
