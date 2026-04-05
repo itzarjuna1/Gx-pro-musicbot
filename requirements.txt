@@ -3,7 +3,6 @@ aiohttp
 asyncio
 beautifulsoup4
 dnspython
-oldpyro==0.1.0
 ffmpeg-python
 gitpython
 hachoir
