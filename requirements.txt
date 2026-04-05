@@ -10,6 +10,8 @@ heroku3
 httpx==0.27.2
 motor
 pillow
+pyromod
+telethon
 psutil
 py-tgcalls==0.9.7
 pykeyboard
