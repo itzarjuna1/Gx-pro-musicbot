@@ -39,8 +39,8 @@ from pytgcalls.types.input_stream.quality import HighQualityAudio, MediumQuality
 from pytgcalls.types.stream import StreamAudioEnded
 
 import config
-from ShrutiMusic import LOGGER, YouTube, app
-from ShrutiMusic.misc import db
+from EsproMusic import LOGGER, YouTube, app
+from EsproMusic.misc import db
 from ShrutiMusic.utils.database import (
     add_active_chat,
     add_active_video_chat,
@@ -53,11 +53,11 @@ from ShrutiMusic.utils.database import (
     remove_active_video_chat,
     set_loop,
 )
-from ShrutiMusic.utils.exceptions import AssistantErr
-from ShrutiMusic.utils.formatters import check_duration, seconds_to_min, speed_converter
-from ShrutiMusic.utils.inline.play import stream_markup
-from ShrutiMusic.utils.stream.autoclear import auto_clean
-from ShrutiMusic.utils.thumbnails import gen_thumb
+from EsproMusic.utils.exceptions import AssistantErr
+from EsproMusic.utils.formatters import check_duration, seconds_to_min, speed_converter
+from EsproMusic.utils.inline.play import stream_markup
+from EsproMusic.utils.stream.autoclear import auto_clean
+from EsproMusic.utils.thumbnails import gen_thumb
 from strings import get_string
 
 autoend = {}
@@ -620,16 +620,6 @@ class Call(PyTgCalls):
             await self.change_stream(client, update.chat_id)
 
 
-Nand = Call()
+Loy = Call()
 
 
-# ©️ Copyright Reserved - @NoxxOP  Nand Yaduwanshi
-
-# ===========================================
-# ©️ 2025 Nand Yaduwanshi (aka @NoxxOP)
-# 🔗 GitHub : https://github.com/NoxxOP/ShrutiMusic
-# 📢 Telegram Channel : https://t.me/ShrutiBots
-# ===========================================
-
-
-# ❤️ Love From ShrutiBots 
