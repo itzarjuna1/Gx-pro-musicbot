@@ -13,7 +13,7 @@ pillow
 pyromod
 telethon
 psutil
-py-tgcalls==1.2.9
+py-tgcalls==0.9.7
 pykeyboard
 kurigram==2.1.35
 pykeyboard
