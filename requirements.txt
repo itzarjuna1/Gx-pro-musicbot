@@ -19,3 +19,4 @@ opencv-python
 pillow==9.5.0
 psutil
 pytz
+pyromod==2.0.0
