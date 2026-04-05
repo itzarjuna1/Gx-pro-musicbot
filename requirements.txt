@@ -1,8 +1,9 @@
 telethon>=1.26.0
 pytgcalls==3.0.0.dev24
 ntgcalls==2.0.9
-pyrogram>=2.1.0
-pyromod
+pyrogram==2.0.106
+pyromod==2.0.0
+tgcrypto
 gTTS
 aiofiles
 aiohttp
@@ -19,4 +20,3 @@ opencv-python
 pillow==9.5.0
 psutil
 pytz
-pyromod==2.0.0
