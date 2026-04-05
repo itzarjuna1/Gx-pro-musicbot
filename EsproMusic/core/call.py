@@ -19,7 +19,7 @@ from pytgcalls.types.stream import StreamAudioEnded
 import config
 from EsproMusic import LOGGER, YouTube, app
 from EsproMusic.misc import db
-from ShrutiMusic.utils.database import (
+from EsproMusic.utils.database import (
     add_active_chat,
     add_active_video_chat,
     get_lang,
