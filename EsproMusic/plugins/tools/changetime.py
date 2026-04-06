@@ -4,7 +4,7 @@ from pymongo import MongoClient, ReturnDocument
 from motor.motor_asyncio import AsyncIOMotorClient 
 from EsproMusic import application 
 from EsproMusic import db, collection, user_totals_collection, user_collection, top_global_groups_collection, top_global_groups_collection, group_user_totals_collection
-
+#waifu added vy itzarjuna1
 async def change_time(update: Update, context: CallbackContext) -> None:
     
     user = update.effective_user
