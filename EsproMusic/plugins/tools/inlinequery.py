@@ -8,7 +8,7 @@ from EsproMusic import user_collection, collection
 
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     from collections import Counter
-
+#query keyboard fixed 
     query = update.inline_query.query
     offset = int(update.inline_query.offset) if update.inline_query.offset else 0
 
