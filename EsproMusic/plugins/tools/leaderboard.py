@@ -13,7 +13,7 @@ import urllib.request
 from config import application 
 from config import db, collection, user_totals_collection, user_collection, top_global_groups_collection, top_global_groups_collection, group_user_totals_collection
 from config import IMG_URL, OWNER_ID
-from EsproMusic.misc import SUDO_USERS as SUDO_USERS 
+from EsproMusic.misc import SUDOERS as SUDO_USERS 
 import random
 import json
 import html
