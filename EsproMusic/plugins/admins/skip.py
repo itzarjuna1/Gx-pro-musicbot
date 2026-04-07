@@ -9,7 +9,7 @@ from EsproMusic.utils.database import get_loop
 from EsproMusic.utils.decorators import AdminRightsCheck
 from EsproMusic.utils.inline import close_markup, stream_markup
 from EsproMusic.utils.stream.autoclear import auto_clean
-from EsproMusic.utils.thumbnails import get_thumb
+from EsproMusic.utils.thumbnails import gen_thumb
 from config import BANNED_USERS
 
 
@@ -115,7 +115,7 @@ async def skip(cli, message: Message, _, chat_id):
         except:
             return await message.reply_text(_["call_6"])
         button = stream_markup(_, chat_id)
-        img = await get_thumb(videoid)
+        img = await gen_thumb(videoid)
         run = await message.reply_photo(
             photo=img,
             caption=_["stream_1"].format(
