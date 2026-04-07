@@ -246,13 +246,13 @@ def main() -> None:
     """Run bot."""
     
     
-    application.add_handler(CommandHandler(["guess", "protecc", "collect", "grab", "hunt"], guess, block=False))
-    application.add_handler(CommandHandler("fav", fav, block=False))
-    application.add_handler(MessageHandler(filters.ALL, message_counter, block=False))
-    application.run_polling(drop_pending_updates=True)
+    app.add_handler(CommandHandler(["guess", "protecc", "collect", "grab", "hunt"], guess, block=False))
+    app.add_handler(CommandHandler("fav", fav, block=False))
+    app.add_handler(MessageHandler(filters.ALL, message_counter, block=False))
+    app.run_polling(drop_pending_updates=True)
     
 if __name__ == "__main__":
-    ROY.start()
+    Loy.start()
     main()
 
   
