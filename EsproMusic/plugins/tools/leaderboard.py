@@ -10,8 +10,8 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandle
 from telegram.ext import CallbackQueryHandler
 from pymongo import MongoClient, ReturnDocument
 import urllib.request
-from EsproMusic import application 
-from EsproMusic import db, collection, user_totals_collection, user_collection, top_global_groups_collection, top_global_groups_collection, group_user_totals_collection
+from config import application 
+from config import db, collection, user_totals_collection, user_collection, top_global_groups_collection, top_global_groups_collection, group_user_totals_collection
 from config import IMG_URL, OWNER_ID
 from EsproMusic.misc import SUDO_USERS as SUDO_USERS 
 import random
