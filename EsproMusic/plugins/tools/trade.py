@@ -7,7 +7,7 @@ from collections import Counter
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram import enums
 from config import db, collection, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
-from EsproMusic import Loy
+from config import Loy
 
 #final fixes done by me
 
