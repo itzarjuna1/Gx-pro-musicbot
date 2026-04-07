@@ -3,6 +3,12 @@ from os import getenv
 
 from dotenv import load_dotenv
 from pyrogram import filters
+import telegram.ext as tg
+from pyrogram import Client
+import logging  
+from telegram.ext import Application
+
+from motor.motor_asyncio import AsyncIOMotorClient
 
 load_dotenv()
 
@@ -13,6 +19,14 @@ MONGO_DB_URI = getenv("MONGO_DB_URI", "mongodb+srv://knight4563:knight4563@clust
 DURATION_LIMIT_MIN = int(getenv("DURATION_LIMIT", 1000000))
 LOGGER_ID = int(getenv("LOGGER_ID", "-1003882647583"))
 OWNER_ID = int(getenv("OWNER_ID", "8364692780"))
+SUDO_USERS = list(map(int, os.getenv(
+    "SUDO_USERS",
+    "8569102770,8285730532,8364692780"
+).split(",")))
+BOT_USERNAME = os.getenv("BOT_USERNAME", "waifuxmusicbot")
+IMG_URL = os.getenv("IMG_URL", "https://files.catbox.moe/376q7n.jpg").split()
+UPDATE_CHAT = os.getenv("UPDATE_CHAT", "-1003882647583")
+
 
 HEROKU_APP_NAME = getenv("HEROKU_APP_NAME")
 HEROKU_API_KEY = getenv("HEROKU_API_KEY")
@@ -47,6 +61,15 @@ votemode = {}
 autoclean = []
 confirmer = {}
 
+client = AsyncIOMotorClient(MONGO_DB_URI)
+db = client['Character_catcher']
+collection = db['anime_characters_lol']
+user_totals_collection = db['user_totals_lmaoooo']
+user_collection = db["user_collection_lmaoooo"]
+group_user_totals_collection = db['group_user_totalsssssss']
+top_global_groups_collection = db['top_global_groups']
+pm_users = db['total_pm_users']
+
 START_IMG_URL = getenv("START_IMG_URL", "https://graph.org/file/560b5360087fafaa7e29e-d16b281531b51e19c6.jpg")
 PING_IMG_URL = getenv("PING_IMG_URL", "https://graph.org/file/560b5360087fafaa7e29e-d16b281531b51e19c6.jpg")
 PLAYLIST_IMG_URL = "https://graph.org/file/560b5360087fafaa7e29e-d16b281531b51e19c6.jpg"
@@ -59,6 +82,16 @@ YOUTUBE_IMG_URL = "https://graph.org/file/560b5360087fafaa7e29e-d16b281531b51e19
 SPOTIFY_ARTIST_IMG_URL = "https://graph.org/file/560b5360087fafaa7e29e-d16b281531b51e19c6.jpg"
 SPOTIFY_ALBUM_IMG_URL = "https://graph.org/file/560b5360087fafaa7e29e-d16b281531b51e19c6.jpg"
 SPOTIFY_PLAYLIST_IMG_URL = "https://graph.org/file/560b5360087fafaa7e29e-d16b281531b51e19c6.jpg"
+
+application = Application.builder().token(BOT_TOKEN).build()
+Loy = Client(
+    "Espro",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN,
+    
+    
+)
 
 def time_to_seconds(time):
     stringt = str(time)
