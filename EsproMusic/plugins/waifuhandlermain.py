@@ -20,7 +20,8 @@ import math
 import html
 from collections import Counter 
 from EsproMusic import db, collection, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
-from config import application, Loy, LOGGER 
+from EsproMusic import app, Loy
+from config import LOGGER 
 from EsproMusic.plugins.tools import ALL_MODULES
 
 
