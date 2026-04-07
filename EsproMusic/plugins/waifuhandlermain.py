@@ -20,8 +20,8 @@ import math
 import html
 from collections import Counter 
 from EsproMusic import db, collection, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
-from EsproMusic import application, ROY, LOGGER 
-from EsproMusic.__main__ import ALL_MODULES
+from config import application, Loy, LOGGER 
+from EsproMusic.plugins.tools import ALL_MODULES
 
 
 locks = {}
@@ -34,7 +34,7 @@ message_counts = {}
 
 
 for module_name in ALL_MODULES:
-    imported_module = importlib.import_module("ROYEDITX.modules." + module_name)
+    imported_module = importlib.import_module("EsproMusic.plugins.tools" + module_name)
 
 
 last_user = {}
