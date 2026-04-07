@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, filters
 from pymongo import MongoClient, ReturnDocument
 from motor.motor_asyncio import AsyncIOMotorClient 
-from config import application 
+from EsproMusic import app
 from config import db, collection, user_totals_collection, user_collection, top_global_groups_collection, top_global_groups_collection, group_user_totals_collection
 #waifu added vy itzarjuna1
 async def change_time(update: Update, context: CallbackContext) -> None:
@@ -40,4 +40,4 @@ async def change_time(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text("❖ ғᴀɪʟᴇᴅ ᴛᴏ ᴄʜᴀɴɢᴇ ᴄʜᴀʀᴀᴄᴛᴇʀ ᴀᴘᴘᴇᴀʀᴀɴᴄᴇ ғʀᴇǫᴜᴇɴᴄʏ.")
 
 
-application.add_handler(CommandHandler("changetime", change_time, block=False))
+app.add_handler(CommandHandler("changetime", change_time, block=False))
