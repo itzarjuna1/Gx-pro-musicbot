@@ -8,7 +8,8 @@ import html
 import random
 from collections import Counter
 from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, filters
-from config import db, collection, user_totals_collection, user_collection, top_global_groups_collection, top_global_groups_collection, group_user_totals_collection, application
+from config import db, collection, user_totals_collection, user_collection, top_global_groups_collection, top_global_groups_collection, group_user_totals_collection
+from EsproMusic import app
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultPhoto, InputTextMessageContent, InputMediaPhoto
 from telegram import InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
@@ -137,8 +138,8 @@ async def harem_callback(update: Update, context: CallbackContext) -> None:
     await harem(update, context, page)
 
 
-application.add_handler(CommandHandler("collection", harem,block=False))
+app.add_handler(CommandHandler("collection", harem,block=False))
 harem_handler = CallbackQueryHandler(harem_callback, pattern='^harem', block=False)
-application.add_handler(harem_handler)
+app.add_handler(harem_handler)
 
     
