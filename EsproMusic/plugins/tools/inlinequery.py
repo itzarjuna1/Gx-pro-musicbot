@@ -3,7 +3,7 @@ from telegram import InlineQueryResultArticle, InputTextMessageContent, InlineQu
 import asyncio
 import time
 from telegram import Update
-from config import application 
+from EsproMusic import app
 from config import user_collection, collection
 
 async def inlinequery(update: Update, context: CallbackContext) -> None:
@@ -57,4 +57,4 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             )], cache_time=5)
 
 
-application.add_handler(InlineQueryHandler(inlinequery, block=False))
+app.add_handler(InlineQueryHandler(inlinequery, block=False))
