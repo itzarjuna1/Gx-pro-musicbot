@@ -6,7 +6,7 @@ from pyrogram.types import InlineQueryResultPhoto, InputTextMessageContent
 from collections import Counter
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram import enums
-from EsproMusic import db, collection, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
+from config import db, collection, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
 from EsproMusic import Loy
 
 #final fixes done 
