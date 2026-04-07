@@ -26,6 +26,8 @@ SUDO_USERS = list(map(int, os.getenv(
 BOT_USERNAME = os.getenv("BOT_USERNAME", "waifuxmusicbot")
 IMG_URL = os.getenv("IMG_URL", "https://files.catbox.moe/376q7n.jpg").split()
 UPDATE_CHAT = os.getenv("UPDATE_CHAT", "-1003882647583")
+CHANNEL_ID = os.getenv("CHANNEL_ID", "-1003729074782")
+
 
 
 HEROKU_APP_NAME = getenv("HEROKU_APP_NAME")
