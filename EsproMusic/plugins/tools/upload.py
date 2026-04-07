@@ -9,7 +9,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import urllib.request
 from pymongo import MongoClient, ReturnDocument
 import random
-from config import application, collection, db, CHANNEL_ID
+from EsproMusic import app
+from config import collection, db, CHANNEL_ID
 
 SUDO_USERS = list(map(int, os.getenv("SUDO_USERS", "8558024747,8569102770").split(",")))
 OWNER_ID = os.getenv("OWNER_ID", "8364692780")
@@ -165,8 +166,8 @@ async def update(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text(f'⬤ ᴇʀʀᴏʀ ➥ {str(e)}')
 
 UPLOAD_HANDLER = CommandHandler('upload', upload, block=False)
-application.add_handler(UPLOAD_HANDLER)
+app.add_handler(UPLOAD_HANDLER)
 DELETE_HANDLER = CommandHandler('delete', delete, block=False)
-application.add_handler(DELETE_HANDLER)
+app.add_handler(DELETE_HANDLER)
 UPDATE_HANDLER = CommandHandler('update', update, block=False)
-application.add_handler(UPDATE_HANDLER)
+app.add_handler(UPDATE_HANDLER)
