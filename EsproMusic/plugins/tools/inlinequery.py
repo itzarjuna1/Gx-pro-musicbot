@@ -3,8 +3,8 @@ from telegram import InlineQueryResultArticle, InputTextMessageContent, InlineQu
 import asyncio
 import time
 from telegram import Update
-from EsproMusic import application 
-from EsproMusic import user_collection, collection
+from config import application 
+from config import user_collection, collection
 
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     from collections import Counter
