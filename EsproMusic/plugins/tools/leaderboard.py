@@ -10,7 +10,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandle
 from telegram.ext import CallbackQueryHandler
 from pymongo import MongoClient, ReturnDocument
 import urllib.request
-from config import application 
+from EsproMusic import app
 from config import db, collection, user_totals_collection, user_collection, top_global_groups_collection, top_global_groups_collection, group_user_totals_collection
 from config import IMG_URL, OWNER_ID
 from EsproMusic.misc import SUDOERS as SUDO_USERS 
@@ -211,14 +211,14 @@ async def send_groups_document(update: Update, context: CallbackContext) -> None
     os.remove('groups.txt')
 
 
-application.add_handler(CommandHandler('ctop', ctop, block=False))
-application.add_handler(CommandHandler('stats', stats, block=False))
-application.add_handler(CommandHandler('TopGroups', global_leaderboard, block=False))
+app.add_handler(CommandHandler('ctop', ctop, block=False))
+app.add_handler(CommandHandler('stats', stats, block=False))
+app.add_handler(CommandHandler('TopGroups', global_leaderboard, block=False))
 
-application.add_handler(CommandHandler('list', send_users_document, block=False))
-application.add_handler(CommandHandler('groups', send_groups_document, block=False))
+app.add_handler(CommandHandler('list', send_users_document, block=False))
+app.add_handler(CommandHandler('groups', send_groups_document, block=False))
 
 
-application.add_handler(CommandHandler('top', leaderboard, block=False))
-application.add_handler(CommandHandler('broadcast', broadcast, block=False))
+app.add_handler(CommandHandler('top', leaderboard, block=False))
+app.add_handler(CommandHandler('broadcast', broadcast, block=False))
       
