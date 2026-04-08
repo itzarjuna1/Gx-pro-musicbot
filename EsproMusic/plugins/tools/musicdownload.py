@@ -8,10 +8,10 @@ from EsproMusic import app
 
 @app.on_message(filters.command("music"))
 async def music(client, message: Message):
-    msg = await message.reply("🔍 Searching...")
+    msg = await message.reply("🦋")
 
     if len(message.command) < 2:
-        return await msg.edit("❌ Usage: /music song name")
+        return await msg.edit("ᴜsᴀɢᴇ ᴜsᴇ /music (music name) ᴛᴏ sᴇᴀʀᴄʜ ғᴏʀ ᴀɴʏ sᴏɴɢ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ")
 
     query = " ".join(message.command[1:])
 
@@ -39,7 +39,7 @@ async def music(client, message: Message):
         file = f"{title.replace('/', '')}.mp4"
         thumb_file = "thumb.jpg"
 
-        await msg.edit("⬇️ Downloading...")
+        await msg.edit("⬇️ ᴅᴏᴡɴʟᴏᴀᴅɪɴɢ ᴠɪᴀ sᴇʟғ ʜᴏsᴛᴇᴅ sᴀᴀᴠɴ ᴀᴘɪ")
 
         # 🔥 Download audio
         audio_data = requests.get(audio_url, timeout=15).content
@@ -51,15 +51,15 @@ async def music(client, message: Message):
         with open(thumb_file, "wb") as f:
             f.write(thumb_data)
 
-        await msg.edit("📤 Uploading...")
+        await msg.edit("🔍")
 
         # 🎧 Caption with full info
-        caption = f"""🎵 **{title}**
-👤 Artist: {artist}
-💿 Album: {album}
-📅 Year: {year}
-🌐 Language: {language}
-⏱ Duration: {duration} sec"""
+        caption = f"""<blockquote><b>🎵 {title}
+👤 ᴀʀᴛɪsᴛ: {artist}
+💿 ᴀʟʙᴜᴍ: {album}
+📅 ʏᴇᴀʀ: {year}
+🌐 ʟᴀɴɢᴜᴀɢᴇ: {language}
+⏱ ᴅᴜʀᴀᴛɪᴏɴ: {duration} sec </b> </blockquote>"""
 
         # 🚀 Send audio
         await client.send_audio(
