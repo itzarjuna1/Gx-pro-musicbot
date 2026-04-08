@@ -66,7 +66,8 @@ async def music(client, message: Message):
             chat_id=message.chat.id,
             audio=file,
             caption=caption,
-            thumb=thumb_file
+            thumb=thumb_file,
+            parse_mode="html"
         )
 
         # 🧹 Cleanup
