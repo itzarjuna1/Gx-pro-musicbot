@@ -10,14 +10,13 @@ from EsproMusic import app
 async def music(client, message: Message):
     msg = await message.reply("🔍 Searching...")
 
-    # ❌ No query
     if len(message.command) < 2:
         return await msg.edit("❌ Usage: /music song name")
 
     query = " ".join(message.command[1:])
 
     try:
-        # ✅ YOUR OWN API
+        # 🔥 YOUR OWN API
         url = f"http://127.0.0.1:3000/api/search/songs?query={query}"
         res = requests.get(url, timeout=10).json()
 
@@ -26,33 +25,53 @@ async def music(client, message: Message):
 
         song = res["data"]["results"][0]
 
-        # 🎵 Extract data
+        # 🎵 Extract info
         title = song["name"]
         artist = song["artists"]["primary"][0]["name"]
-        thumb = song["image"][-1]["url"]
+        album = song["album"]["name"]
+        duration = song["duration"]
+        year = song.get("year", "Unknown")
+        language = song.get("language", "Unknown")
         audio_url = song["downloadUrl"][-1]["url"]
+        thumb_url = song["image"][-1]["url"]
 
-        file = f"{title}.mp4"
+        # 🧹 Clean filename
+        file = f"{title.replace('/', '')}.mp4"
+        thumb_file = "thumb.jpg"
 
         await msg.edit("⬇️ Downloading...")
 
         # 🔥 Download audio
-        audio = requests.get(audio_url, timeout=15).content
+        audio_data = requests.get(audio_url, timeout=15).content
         with open(file, "wb") as f:
-            f.write(audio)
+            f.write(audio_data)
+
+        # 🖼 Download thumbnail
+        thumb_data = requests.get(thumb_url).content
+        with open(thumb_file, "wb") as f:
+            f.write(thumb_data)
 
         await msg.edit("📤 Uploading...")
 
-        # 🎧 Send audio
+        # 🎧 Caption with full info
+        caption = f"""🎵 **{title}**
+👤 Artist: {artist}
+💿 Album: {album}
+📅 Year: {year}
+🌐 Language: {language}
+⏱ Duration: {duration} sec"""
+
+        # 🚀 Send audio
         await client.send_audio(
             chat_id=message.chat.id,
             audio=file,
-            caption=f"🎵 {title}\n👤 {artist}",
-            thumb=thumb
+            caption=caption,
+            thumb=thumb_file
         )
 
         # 🧹 Cleanup
         os.remove(file)
+        os.remove(thumb_file)
         await msg.delete()
 
     except Exception as e:
