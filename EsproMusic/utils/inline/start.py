@@ -19,7 +19,7 @@ def start_panel(_):
 def private_panel(_):
     buttons = [
         [
-            InlineKeyboardButton(text=_["S_B_4"], callback_data="settings_back_helper", style=ButtonStyle.DANGER),
+            InlineKeyboardButton(text=_["S_B_4"], callback_data="settings_back_helper", style=ButtonStyle.SUCCESS),
         ],
         [
             InlineKeyboardButton(text=_["S_B_2"], url=config.SUPPORT_CHAT, style=ButtonStyle.WARNING),
