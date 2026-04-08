@@ -1,52 +1,58 @@
 import os
 import requests
-from pyrogram import Client, filters
+from pyrogram import filters
 from pyrogram.types import Message
 
 from EsproMusic import app
 
 
 @app.on_message(filters.command("music"))
-async def saavn_music(client: Client, message: Message):
-    msg = await message.reply("🦋")
+async def music(client, message: Message):
+    msg = await message.reply("🔍 Searching...")
 
+    # ❌ No query
     if len(message.command) < 2:
-        return await msg.edit("Usage: /music song name")
+        return await msg.edit("❌ Usage: /music song name")
 
     query = " ".join(message.command[1:])
 
     try:
-        # 🔥 Search API
-        url = f"https://saavn.dev/api/search/songs?query={query}"
-        res = requests.get(url).json()
+        # ✅ YOUR OWN API
+        url = f"http://127.0.0.1:3000/api/search/songs?query={query}"
+        res = requests.get(url, timeout=10).json()
 
         if not res.get("data") or not res["data"]["results"]:
             return await msg.edit("❌ No results found")
 
         song = res["data"]["results"][0]
 
-        # 🎵 details
+        # 🎵 Extract data
         title = song["name"]
-        artist = song["primaryArtists"]
-        download_url = song["downloadUrl"][-1]["url"]  # best quality
+        artist = song["artists"]["primary"][0]["name"]
+        thumb = song["image"][-1]["url"]
+        audio_url = song["downloadUrl"][-1]["url"]
 
-        file_name = "song.mp3"
+        file = f"{title}.mp4"
+
+        await msg.edit("⬇️ Downloading...")
 
         # 🔥 Download audio
-        audio_data = requests.get(download_url).content
-        with open(file_name, "wb") as f:
-            f.write(audio_data)
+        audio = requests.get(audio_url, timeout=15).content
+        with open(file, "wb") as f:
+            f.write(audio)
 
         await msg.edit("📤 Uploading...")
 
-        # send
+        # 🎧 Send audio
         await client.send_audio(
             chat_id=message.chat.id,
-            audio=file_name,
+            audio=file,
             caption=f"🎵 {title}\n👤 {artist}",
+            thumb=thumb
         )
 
-        os.remove(file_name)
+        # 🧹 Cleanup
+        os.remove(file)
         await msg.delete()
 
     except Exception as e:
