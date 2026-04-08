@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
@@ -25,13 +26,13 @@ async def music_handler(client: Client, message: Message):
         return await msg.edit("<code>Userbot assistant not found.</code>")
 
     try:
-        # 🔥 Inline search via assistant
+        # 🔥 Step 1: Assistant se inline search
         results = await ubot.get_inline_bot_results("deezermusicbot", query)
 
         if not results.results:
             return await msg.edit("<code>❌ No results found</code>")
 
-        # 🔥 Pick only AUDIO result
+        # 🔥 Step 2: Sirf audio result pick karo
         audio_result = None
         for res in results.results:
             if res.type == "audio":
@@ -41,7 +42,7 @@ async def music_handler(client: Client, message: Message):
         if not audio_result:
             return await msg.edit("<code>❌ No downloadable audio found</code>")
 
-        # 🔥 Send via assistant (Saved Messages)
+        # 🔥 Step 3: Assistant se Saved Messages me send
         sent = await ubot.send_inline_bot_result(
             chat_id="me",
             query_id=results.query_id,
@@ -56,7 +57,7 @@ async def music_handler(client: Client, message: Message):
         if isinstance(sent, Message):
             saved_msg = sent
 
-        # ✅ CASE 2: updates वाला return
+        # ✅ CASE 2: updates wala
         elif hasattr(sent, "updates"):
             for upd in sent.updates:
                 if hasattr(upd, "message") and upd.message:
@@ -64,28 +65,34 @@ async def music_handler(client: Client, message: Message):
                     break
 
         if not saved_msg:
-            return await msg.edit("<code>❌ Failed to fetch song from assistant</code>")
+            return await msg.edit("<code>❌ Failed to fetch song</code>")
 
         # Proper fetch
         saved_msg = await ubot.get_messages("me", saved_msg.id)
 
-        # ❌ MEDIA_EMPTY fix
+        # ❌ Safety check
         if not saved_msg.audio:
-            return await msg.edit("<code>❌ Failed: No audio in result</code>")
+            return await msg.edit("<code>❌ No audio found</code>")
+
+        # 🔥 Step 4: Download via assistant
+        file_path = await ubot.download_media(saved_msg.audio.file_id)
 
         # Reply logic
         reply_to = message.reply_to_message.id if message.reply_to_message else None
 
-        # 🎵 Send audio via MAIN BOT
+        # 🔥 Step 5: Send via BOT (reupload)
         await client.send_audio(
             chat_id=message.chat.id,
-            audio=saved_msg.audio.file_id,
+            audio=file_path,
             caption=f"🎵 **{query}**",
             reply_to_message_id=reply_to,
         )
 
-        # 🧹 Cleanup assistant side
+        # 🧹 Cleanup
         await ubot.delete_messages("me", saved_msg.id)
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
         await msg.delete()
 
