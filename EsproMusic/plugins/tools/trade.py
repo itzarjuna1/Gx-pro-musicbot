@@ -15,7 +15,7 @@ from EsproMusic import Loy
 pending_trades = {}
 
 
-@ROY.on_message(filters.command("trade"))
+@Loy.on_message(filters.command("trade"))
 async def trade(client, message):
     sender_id = message.from_user.id
 
