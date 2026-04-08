@@ -8,7 +8,7 @@ from EsproMusic import app
 
 @app.on_message(filters.command("music"))
 async def yt_music(client: Client, message: Message):
-    msg = await message.reply("🔍 Searching on YouTube...")
+    msg = await message.reply("🦋")
 
     if len(message.command) < 2:
         return await msg.edit("Usage: /music song name")
@@ -16,40 +16,43 @@ async def yt_music(client: Client, message: Message):
     query = " ".join(message.command[1:])
 
     try:
-        # 🔥 yt-dlp command
-        cmd = f'yt-dlp -x --audio-format mp3 --no-playlist "ytsearch1:{query}" -o "%(title)s.%(ext)s"'
-        
-        process = await asyncio.create_subprocess_shell(
-            cmd,
+        file_name = "song.mp3"
+
+        cmd = [
+            "yt-dlp",
+            "-x",
+            "--audio-format", "mp3",
+            "--ffmpeg-location", "/usr/bin/ffmpeg",
+            "-o", file_name,
+            f"ytsearch1:{query}"
+        ]
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
 
-        await process.communicate()
+        stdout, stderr = await process.communicate()
 
-        # 🎵 downloaded file find karna
-        file = None
-        for f in os.listdir():
-            if f.endswith(".mp3"):
-                file = f
-                break
-
-        if not file:
+        if process.returncode != 0:
+            print(stderr.decode())
             return await msg.edit("❌ Download failed")
 
-        await msg.edit("🦋")
+        if not os.path.exists(file_name):
+            return await msg.edit("❌ File not found")
 
-        # send
+        await msg.edit("📤 Uploading...")
+
         await client.send_audio(
             chat_id=message.chat.id,
-            audio=file,
+            audio=file_name,
             caption=f"🎵 {query}",
         )
 
-        # cleanup
-        os.remove(file)
+        os.remove(file_name)
         await msg.delete()
 
     except Exception as e:
-        print(e)
+        print("ERROR:", e)
         await msg.edit("❌ Error downloading song")
