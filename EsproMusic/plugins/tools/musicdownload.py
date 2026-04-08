@@ -12,7 +12,6 @@ from EsproMusic.core.userbot import assistants
 async def music_handler(client: Client, message: Message):
     msg = await message.reply("<code>🔍 Searching...</code>")
 
-    # Song name lena
     if len(message.command) < 2:
         return await msg.edit("<code>Usage: /music song name</code>")
 
@@ -25,14 +24,14 @@ async def music_handler(client: Client, message: Message):
         return await msg.edit("<code>Userbot assistant not found.</code>")
 
     try:
-        # Inline bot results fetch karega userbot
+        # ✅ IMPORTANT: Inline search ONLY via assistant
         results = await ubot.get_inline_bot_results("deezermusicbot", query)
 
         if not results.results:
             return await msg.edit("<code>No results found.</code>")
 
-        # Saved messages me bhejega (userbot side)
-        saved = await ubot.send_inline_bot_result(
+        # ✅ Assistant hi send karega Saved Messages me
+        sent = await ubot.send_inline_bot_result(
             chat_id="me",
             query_id=results.query_id,
             result_id=results.results[0].id,
@@ -40,12 +39,15 @@ async def music_handler(client: Client, message: Message):
 
         await asyncio.sleep(1)
 
-        # Message fetch karega
-        saved_msg = await ubot.get_messages("me", saved.updates[1].message.id)
+        # ✅ Assistant se hi message fetch
+        saved_msg = await ubot.get_messages(
+            "me", sent.updates[1].message.id
+        )
 
-        # Main bot se send karega group me
+        # Reply logic
         reply_to = message.reply_to_message.id if message.reply_to_message else None
 
+        # ✅ Final send MAIN BOT karega
         await client.send_audio(
             chat_id=message.chat.id,
             audio=saved_msg.audio.file_id,
@@ -53,7 +55,7 @@ async def music_handler(client: Client, message: Message):
             reply_to_message_id=reply_to,
         )
 
-        # Cleanup (userbot side)
+        # ✅ Cleanup assistant side
         await ubot.delete_messages("me", saved_msg.id)
 
         await msg.delete()
