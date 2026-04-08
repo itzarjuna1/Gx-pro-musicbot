@@ -1,4 +1,5 @@
 from typing import Union
+from pyrogram.enums import ButtonStyle
 
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -84,6 +85,13 @@ def help_pannel(_, START: Union[bool, int] = None):
                 InlineKeyboardButton(
                     text=_["H_B_15"],
                     callback_data="help_callback hb15",
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    text=_["H_B_15"],
+                    callback_data="help_callback hb15",
+                    style=BUTTONSTYLE.SUCCESS,
                 ),
             ],
             mark,
