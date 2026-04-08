@@ -1,50 +1,63 @@
 import asyncio
+
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
+from EsproMusic import app
+from EsproMusic import userbot as us
+from EsproMusic.core.userbot import assistants
 
-@Client.on_message(filters.command(["music"]))
-async def send_music(client: Client, message: Message):
+
+@app.on_message(filters.command("music"))
+async def music_handler(client: Client, message: Message):
+    msg = await message.reply("<code>🔍 Searching...</code>")
+
+    # Song name lena
+    if len(message.command) < 2:
+        return await msg.edit("<code>Usage: /music song name</code>")
+
+    query = " ".join(message.command[1:])
+
+    # Assistant check
+    if 1 in assistants:
+        ubot = us.one
+    else:
+        return await msg.edit("<code>Userbot assistant not found.</code>")
+
     try:
-        if len(message.command) < 2:
-            return await message.reply_text("❖ Please give a song name")
-
-        song_name = " ".join(message.command[1:])
-
-        msg = await message.reply_text("🔍 Searching...")
-
-        # Inline bot se result
-        results = await client.get_inline_bot_results("deezermusicbot", song_name)
+        # Inline bot results fetch karega userbot
+        results = await ubot.get_inline_bot_results("deezermusicbot", query)
 
         if not results.results:
-            return await msg.edit("❌ No results found")
+            return await msg.edit("<code>No results found.</code>")
 
-        # Saved messages me bhejna
-        saved = await client.send_inline_bot_result(
+        # Saved messages me bhejega (userbot side)
+        saved = await ubot.send_inline_bot_result(
             chat_id="me",
             query_id=results.query_id,
             result_id=results.results[0].id,
         )
 
-        # Message fetch karna
-        saved_msg = await client.get_messages("me", saved.updates[1].message.id)
+        await asyncio.sleep(1)
 
-        # Reply logic (simple)
+        # Message fetch karega
+        saved_msg = await ubot.get_messages("me", saved.updates[1].message.id)
+
+        # Main bot se send karega group me
         reply_to = message.reply_to_message.id if message.reply_to_message else None
 
-        # Audio send
         await client.send_audio(
             chat_id=message.chat.id,
             audio=saved_msg.audio.file_id,
-            caption=f"🎵 {song_name}",
+            caption=f"🎵 **{query}**",
             reply_to_message_id=reply_to,
         )
 
-        # Saved message delete
-        await client.delete_messages("me", saved_msg.id)
+        # Cleanup (userbot side)
+        await ubot.delete_messages("me", saved_msg.id)
 
         await msg.delete()
 
     except Exception as e:
         print(e)
-        await message.reply_text("❌ Failed to download song")
+        await msg.edit("<code>❌ Failed to fetch song</code>")
