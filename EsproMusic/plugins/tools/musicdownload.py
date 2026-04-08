@@ -1,5 +1,6 @@
 import os
 import requests
+import html
 from pyrogram import filters
 from pyrogram.types import Message
 
