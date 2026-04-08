@@ -24,30 +24,44 @@ async def music_handler(client: Client, message: Message):
         return await msg.edit("<code>Userbot assistant not found.</code>")
 
     try:
-        # ✅ IMPORTANT: Inline search ONLY via assistant
+        # 🔥 Inline search via assistant
         results = await ubot.get_inline_bot_results("deezermusicbot", query)
 
         if not results.results:
-            return await msg.edit("<code>No results found.</code>")
+            return await msg.edit("<code>❌ No results found</code>")
 
-        # ✅ Assistant hi send karega Saved Messages me
+        # 🔥 Send via assistant
         sent = await ubot.send_inline_bot_result(
             chat_id="me",
             query_id=results.query_id,
             result_id=results.results[0].id,
         )
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
 
-        # ✅ Assistant se hi message fetch
-        saved_msg = await ubot.get_messages(
-            "me", sent.updates[1].message.id
-        )
+        saved_msg = None
+
+        # ✅ CASE 1: Direct Message
+        if isinstance(sent, Message):
+            saved_msg = sent
+
+        # ✅ CASE 2: updates wala case
+        elif hasattr(sent, "updates"):
+            for upd in sent.updates:
+                if hasattr(upd, "message") and upd.message:
+                    saved_msg = upd.message
+                    break
+
+        if not saved_msg:
+            return await msg.edit("<code>❌ Failed to fetch song from assistant</code>")
+
+        # Ensure proper fetch
+        saved_msg = await ubot.get_messages("me", saved_msg.id)
 
         # Reply logic
         reply_to = message.reply_to_message.id if message.reply_to_message else None
 
-        # ✅ Final send MAIN BOT karega
+        # 🎵 Send audio via main bot
         await client.send_audio(
             chat_id=message.chat.id,
             audio=saved_msg.audio.file_id,
@@ -55,11 +69,11 @@ async def music_handler(client: Client, message: Message):
             reply_to_message_id=reply_to,
         )
 
-        # ✅ Cleanup assistant side
+        # 🧹 Cleanup assistant side
         await ubot.delete_messages("me", saved_msg.id)
 
         await msg.delete()
 
     except Exception as e:
-        print(e)
+        print("ERROR:", e)
         await msg.edit("<code>❌ Failed to fetch song</code>")
