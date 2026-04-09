@@ -1,4 +1,3 @@
-
 import os
 import asyncio
 import subprocess
@@ -33,6 +32,7 @@ async def is_admin(client, message: Message):
     except:
         return False
 
+
 # ================= NSFW APIs ====================
 HF_NSFW_API = "https://nexacoders-nexa-api.hf.space/scan"
 API4AI_URL = "https://demo.api4ai.cloud/nsfw/v1/results"
@@ -40,11 +40,10 @@ API4AI_KEY = "a4a-p3htHPSXFeCnvAZ21nLkRtRPGUFFTaJV"
 
 TIMEOUT = httpx.Timeout(20.0, connect=10.0)
 
-# 🔥 LOWERED THRESHOLD (better detection)
 THRESHOLD = {
-    "porn": 30,
-    "hentai": 30,
-    "sexy": 40
+    "porn": 5,
+    "hentai": 5,
+    "sexy": 10
 }
 
 
@@ -77,13 +76,18 @@ async def scan_hf(path):
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             with open(path, "rb") as f:
                 r = await client.post(HF_NSFW_API, files={"file": f})
+
         if r.status_code != 200:
             return None
-        s = r.json().get("scores", {})
+
+        data = r.json()
+        s = data.get("scores", {})
+
         return {
             "porn": s.get("porn", 0) * 100,
             "hentai": s.get("hentai", 0) * 100,
             "sexy": s.get("sexy", 0) * 100,
+            "safe": data.get("safe", True)
         }
     except:
         return None
@@ -98,10 +102,13 @@ async def scan_api4ai(path):
                     headers={"A4AI-KEY": API4AI_KEY},
                     files={"image": f}
                 )
+
         if r.status_code != 200:
             return None
+
         data = r.json()
         e = data["results"][0]["entities"][0]["classes"]
+
         return {
             "porn": e.get("porn", 0) * 100,
             "hentai": e.get("hentai", 0) * 100,
@@ -111,7 +118,10 @@ async def scan_api4ai(path):
         return None
 
 
-def is_nsfw(res):
+def is_nsfw(res, hf=None):
+    if hf and hf.get("safe") is False:
+        return True
+
     return (
         res["porn"] >= THRESHOLD["porn"] or
         res["hentai"] >= THRESHOLD["hentai"] or
@@ -159,7 +169,10 @@ async def scan_media(message: Message):
             return {"error": True}
 
         def best(k):
-            return max((hf or {}).get(k, 0), (api or {}).get(k, 0))
+            return max(
+                (hf or {}).get(k, 0),
+                (api or {}).get(k, 0)
+            )
 
         results = {
             "porn": best("porn"),
@@ -167,7 +180,7 @@ async def scan_media(message: Message):
             "sexy": best("sexy"),
         }
 
-        sfw = not is_nsfw(results)
+        sfw = not is_nsfw(results, hf)
 
         doc = {
             "_id": fid,
@@ -195,15 +208,15 @@ async def scan_media(message: Message):
 @app.on_message(filters.command("nsfw") & filters.group)
 async def toggle(client, message: Message):
     if not await is_admin(client, message):
-        return await message.reply("❌ admins only")
+        return await message.reply("admins only")
 
     if len(message.command) < 2:
-        return await message.reply("Usage: /nsfw enable or disable")
+        return await message.reply("usage: /nsfw enable or disable")
 
     state = message.command[1].lower()
 
     if state not in ["enable", "disable"]:
-        return await message.reply("Use: enable or disable")
+        return await message.reply("use: enable or disable")
 
     await groups.update_one(
         {"_id": message.chat.id},
@@ -211,46 +224,51 @@ async def toggle(client, message: Message):
         upsert=True
     )
 
-    await message.reply(f"NSFW {'ENABLED' if state=='enable' else 'DISABLED'}")
+    await message.reply(
+        f"nsfw {'enabled' if state=='enable' else 'disabled'}"
+    )
 
 
 @app.on_message(filters.command("nsfwstatus") & filters.group)
 async def status(client, message: Message):
     grp = await groups.find_one({"_id": message.chat.id})
     state = grp.get("nsfw") if grp else False
-    await message.reply(f"NSFW is {'ENABLED' if state else 'DISABLED'}")
+    await message.reply(f"nsfw is {'enabled' if state else 'disabled'}")
 
 
 @app.on_message(filters.command("scan") & filters.group)
 async def scan_cmd(client, message: Message):
     if not message.reply_to_message:
-        return await message.reply("Reply to media")
+        return await message.reply("reply to media")
 
     r = await scan_media(message.reply_to_message)
 
     if "error" in r:
-        return await message.reply("Scan failed")
+        return await message.reply("scan failed")
 
     d = r["results"]
 
     await message.reply(
-        f"NSFW Result 🔞\n\n"
-        f"Porn: {d['porn']:.1f}%\n"
-        f"Hentai: {d['hentai']:.1f}%\n"
-        f"Sexy: {d['sexy']:.1f}%\n\n"
-        f"Status: {'NSFW' if not r['sfw'] else 'SAFE'}"
+        f"nsfw result\n\n"
+        f"porn: {d['porn']:.1f}%\n"
+        f"hentai: {d['hentai']:.1f}%\n"
+        f"sexy: {d['sexy']:.1f}%\n\n"
+        f"status: {'nsfw' if not r['sfw'] else 'safe'}"
     )
 
 
 @app.on_message(filters.command("marknsfw") & filters.group)
 async def mark(client, message: Message):
     if not await is_admin(client, message):
-        return await message.reply("❌ admins only")
+        return await message.reply("admins only")
 
     if not message.reply_to_message:
-        return await message.reply("Reply to media")
+        return await message.reply("reply to media")
 
     media = extract_media(message.reply_to_message)
+    if not media:
+        return await message.reply("invalid media")
+
     fid = media.file_unique_id
 
     await NSFW.update_one(
@@ -259,18 +277,21 @@ async def mark(client, message: Message):
         upsert=True
     )
 
-    await message.reply("Marked NSFW")
+    await message.reply("marked nsfw")
 
 
 @app.on_message(filters.command("unmarknsfw") & filters.group)
 async def unmark(client, message: Message):
     if not await is_admin(client, message):
-        return await message.reply("❌ admins only")
+        return await message.reply("admins only")
 
     if not message.reply_to_message:
-        return await message.reply("Reply to media")
+        return await message.reply("reply to media")
 
     media = extract_media(message.reply_to_message)
+    if not media:
+        return await message.reply("invalid media")
+
     fid = media.file_unique_id
 
     await NSFW.update_one(
@@ -279,7 +300,7 @@ async def unmark(client, message: Message):
         upsert=True
     )
 
-    await message.reply("Marked SAFE")
+    await message.reply("marked safe")
 
 
 # ================= AUTO FILTER =================
@@ -302,7 +323,7 @@ async def auto(client, message: Message):
 
     try:
         await message.delete()
-        warn = await message.reply("🚫 NSFW detected & removed")
+        warn = await message.reply("nsfw detected & removed")
     except (RPCError, MessageDeleteForbidden):
         return
 
