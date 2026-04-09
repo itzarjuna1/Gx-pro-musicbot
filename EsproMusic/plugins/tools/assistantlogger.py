@@ -6,7 +6,7 @@ from pyrogram.types import Message
 from pytgcalls.types import Update, GroupCallParticipant
 
 # IMPORT YOUR ASSISTANT (USERBOT)
-from EsproMusic.core.userbot import userbot as assistant
+from EsproMusic.core.userbot import assistants as assistant
 
 # ================= CONFIG ================= #
 
