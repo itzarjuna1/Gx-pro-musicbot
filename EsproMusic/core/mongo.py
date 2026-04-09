@@ -19,4 +19,4 @@ NSFW = mongodb.nsfw         # for scanned media cache
 
 # ================= STORAGE =================
 
-NSFW_STORAGE = -1003882647583 # <-- replace with your channel id
+NSFW_STORAGE = -1003777474108# <-- replace with your channel id
