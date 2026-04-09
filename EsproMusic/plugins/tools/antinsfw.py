@@ -52,7 +52,6 @@ def extract_media(msg: Message):
 async def process_sticker(message: Message, fid: str):
     tmp = await message.download(f"temp/{fid}")
 
-    # static sticker
     if tmp.endswith(".webp"):
         try:
             img = Image.open(tmp).convert("RGB")
@@ -64,7 +63,7 @@ async def process_sticker(message: Message, fid: str):
             os.remove(tmp)
             return None
 
-    # animated sticker → skip
+    # animated sticker → force NSFW
     if tmp.endswith(".tgs"):
         os.remove(tmp)
         return "SKIP"
@@ -149,7 +148,11 @@ async def scan_media(message: Message):
             path = await process_sticker(message, fid)
 
             if path == "SKIP":
-                return {"_id": fid, "sfw": False}  # 🔥 force delete animated
+                return {
+                    "_id": fid,
+                    "sfw": False,
+                    "results": {"porn": 100, "hentai": 100, "sexy": 100}
+                }
 
             if not path:
                 return {"error": True}
@@ -222,12 +225,114 @@ async def toggle(client, message: Message):
     await message.reply(f"nsfw {'on' if state=='on' else 'off'}")
 
 
-@app.on_message((filters.photo | filters.video | filters.animation | filters.sticker) & filters.group)
+@app.on_message(filters.command("scan") & filters.group)
+async def scan_cmd(client, message: Message):
+    if not message.reply_to_message:
+        return await message.reply("reply to media")
+
+    r = await scan_media(message.reply_to_message)
+
+    if "error" in r:
+        return await message.reply("scan failed")
+
+    d = r["results"]
+
+    await message.reply(
+        f"nsfw\n\nporn: {d['porn']:.1f}%\n"
+        f"hentai: {d['hentai']:.1f}%\n"
+        f"sexy: {d['sexy']:.1f}%"
+    )
+
+
+@app.on_message(filters.command("marknsfw") & filters.group)
+async def mark_nsfw(client, message: Message):
+    if not await is_admin(client, message):
+        return await message.reply("admins only")
+
+    if not message.reply_to_message:
+        return await message.reply("reply to media")
+
+    media = extract_media(message.reply_to_message)
+    fid = media.file_unique_id
+
+    await NSFW.update_one(
+        {"_id": fid},
+        {"$set": {"sfw": False}},
+        upsert=True
+    )
+
+    await message.reply("marked nsfw")
+
+
+@app.on_message(filters.command("unmarknsfw") & filters.group)
+async def unmark(client, message: Message):
+    if not await is_admin(client, message):
+        return await message.reply("admins only")
+
+    media = extract_media(message.reply_to_message)
+    fid = media.file_unique_id
+
+    await NSFW.update_one(
+        {"_id": fid},
+        {"$set": {"sfw": True}},
+        upsert=True
+    )
+
+    await message.reply("marked safe")
+
+
+@app.on_message(filters.command("blsticker") & filters.group)
+async def bl_sticker(client, message: Message):
+    if not await is_admin(client, message):
+        return await message.reply("admins only")
+
+    pack = message.reply_to_message.sticker.set_name
+
+    await groups.update_one(
+        {"_id": message.chat.id},
+        {"$addToSet": {"bl_stickers": pack}},
+        upsert=True
+    )
+
+    await message.reply("sticker pack blacklisted")
+
+
+@app.on_message(filters.command("unblsticker") & filters.group)
+async def unbl_sticker(client, message: Message):
+    if not await is_admin(client, message):
+        return await message.reply("admins only")
+
+    pack = message.reply_to_message.sticker.set_name
+
+    await groups.update_one(
+        {"_id": message.chat.id},
+        {"$pull": {"bl_stickers": pack}}
+    )
+
+    await message.reply("sticker pack unblacklisted")
+
+
+# ================= AUTO =================
+
+@app.on_message(
+    (filters.photo | filters.video | filters.animation | filters.sticker | filters.document)
+    & filters.group,
+    group=0
+)
 async def auto(client, message: Message):
     grp = await groups.find_one({"_id": message.chat.id})
 
     if not grp or not grp.get("nsfw"):
         return
+
+    if message.sticker:
+        pack = message.sticker.set_name
+        if pack and pack in grp.get("bl_stickers", []):
+            try:
+                await message.delete()
+                return
+            except:
+                return
 
     r = await scan_media(message)
 
