@@ -4,6 +4,9 @@ import subprocess
 from PIL import Image
 import httpx
 
+from lottie.importers import import_tgs
+from lottie.exporters import export_png
+
 from pyrogram import filters
 from pyrogram.types import Message
 from pyrogram.errors import RPCError, MessageDeleteForbidden
@@ -20,7 +23,6 @@ API4AI_KEY = "a4a-p3htHPSXFeCnvAZ21nLkRtRPGUFFTaJV"
 
 TIMEOUT = httpx.Timeout(20.0, connect=10.0)
 
-# ✅ balanced aggressive
 THRESHOLD = {
     "porn": 3,
     "hentai": 3,
@@ -49,10 +51,11 @@ def extract_media(msg: Message):
     )
 
 
-# ================= STICKER =================
+# ================= STICKER (ADVANCED) =================
 async def process_sticker(message: Message, fid: str):
     tmp = await message.download(f"temp/{fid}")
 
+    # static sticker
     if tmp.endswith(".webp"):
         try:
             img = Image.open(tmp).convert("RGB")
@@ -64,9 +67,17 @@ async def process_sticker(message: Message, fid: str):
             os.remove(tmp)
             return None
 
+    # animated sticker (.tgs → png)
     if tmp.endswith(".tgs"):
-        os.remove(tmp)
-        return "SKIP"
+        try:
+            anim = import_tgs(tmp)
+            path = f"temp/{fid}.png"
+            export_png(anim, path, frame=0)
+            os.remove(tmp)
+            return path
+        except:
+            os.remove(tmp)
+            return None
 
     return tmp
 
@@ -118,6 +129,10 @@ async def scan_api4ai(path):
 
 
 def is_nsfw(res):
+    # 🔥 slightly stronger hentai detection
+    if res["hentai"] > 2:
+        return True
+
     return (
         res["porn"] >= THRESHOLD["porn"] or
         res["hentai"] >= THRESHOLD["hentai"] or
@@ -145,10 +160,7 @@ async def scan_media(message: Message):
         elif message.sticker:
             path = await process_sticker(message, fid)
 
-            if path == "SKIP":
-                return {"_id": fid, "sfw": True}
-
-            if not path:
+            if not path or not os.path.exists(path):
                 return {"error": True}
 
         else:
@@ -241,7 +253,7 @@ async def scan_cmd(client, message: Message):
     )
 
 
-# 🔥 NEW: blacklist sticker pack
+# 🔥 blacklist sticker pack
 @app.on_message(filters.command("blsticker") & filters.group)
 async def bl_sticker(client, message: Message):
     if not await is_admin(client, message):
@@ -277,7 +289,7 @@ async def auto(client, message: Message):
     if not grp or not grp.get("nsfw"):
         return
 
-    # 🔥 check blacklisted sticker packs
+    # 🔥 pack blacklist
     if message.sticker:
         pack = message.sticker.set_name
         if pack and pack in grp.get("bl_stickers", []):
