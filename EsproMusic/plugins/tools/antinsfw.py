@@ -40,33 +40,40 @@ API4AI_KEY = "a4a-p3htHPSXFeCnvAZ21nLkRtRPGUFFTaJV"
 
 TIMEOUT = httpx.Timeout(20.0, connect=10.0)
 
+# 🔥 aggressive thresholds
 THRESHOLD = {
-    "porn": 5,
-    "hentai": 5,
-    "sexy": 10
+    "porn": 3,
+    "hentai": 3,
+    "sexy": 6
 }
 
 
 def extract_media(msg: Message):
     return (
-        msg.photo or msg.video or msg.animation or msg.sticker or
-        msg.document
+        msg.photo or msg.video or msg.animation or msg.sticker or msg.document
     )
 
 
+# ✅ FIXED STICKER HANDLING
 async def process_sticker(message: Message, fid: str):
     tmp = await message.download(f"temp/{fid}")
 
+    # static sticker
     if tmp.endswith(".webp"):
-        img = Image.open(tmp).convert("RGB")
-        path = f"temp/{fid}.jpg"
-        img.save(path, "JPEG")
-        os.remove(tmp)
-        return path
+        try:
+            img = Image.open(tmp).convert("RGB")
+            path = f"temp/{fid}.jpg"
+            img.save(path, "JPEG")
+            os.remove(tmp)
+            return path
+        except:
+            os.remove(tmp)
+            return None
 
+    # animated sticker → skip
     if tmp.endswith(".tgs"):
         os.remove(tmp)
-        return None
+        return "SKIP"
 
     return tmp
 
@@ -118,13 +125,17 @@ async def scan_api4ai(path):
         return None
 
 
+# ✅ improved detection
 def is_nsfw(res, hf=None):
     if hf and hf.get("safe") is False:
         return True
 
+    # aggressive hentai detection
+    if res["hentai"] > 2:
+        return True
+
     return (
         res["porn"] >= THRESHOLD["porn"] or
-        res["hentai"] >= THRESHOLD["hentai"] or
         res["sexy"] >= THRESHOLD["sexy"]
     )
 
@@ -147,8 +158,12 @@ async def scan_media(message: Message):
 
         elif message.sticker:
             path = await process_sticker(message, fid)
+
+            if path == "SKIP":
+                return {"_id": fid, "sfw": True}
+
             if not path:
-                return {"_id": fid, "sfw": False, "results": {"porn": 100, "hentai": 100, "sexy": 100}}
+                return {"error": True}
 
         else:
             tmp = await message.download(f"temp/{fid}")
@@ -224,9 +239,7 @@ async def toggle(client, message: Message):
         upsert=True
     )
 
-    await message.reply(
-        f"nsfw {'enabled' if state=='enable' else 'disabled'}"
-    )
+    await message.reply(f"nsfw {'enabled' if state=='enable' else 'disabled'}")
 
 
 @app.on_message(filters.command("nsfwstatus") & filters.group)
@@ -256,54 +269,6 @@ async def scan_cmd(client, message: Message):
         f"status: {'nsfw' if not r['sfw'] else 'safe'}"
     )
 
-
-@app.on_message(filters.command("marknsfw") & filters.group)
-async def mark(client, message: Message):
-    if not await is_admin(client, message):
-        return await message.reply("admins only")
-
-    if not message.reply_to_message:
-        return await message.reply("reply to media")
-
-    media = extract_media(message.reply_to_message)
-    if not media:
-        return await message.reply("invalid media")
-
-    fid = media.file_unique_id
-
-    await NSFW.update_one(
-        {"_id": fid},
-        {"$set": {"sfw": False}},
-        upsert=True
-    )
-
-    await message.reply("marked nsfw")
-
-
-@app.on_message(filters.command("unmarknsfw") & filters.group)
-async def unmark(client, message: Message):
-    if not await is_admin(client, message):
-        return await message.reply("admins only")
-
-    if not message.reply_to_message:
-        return await message.reply("reply to media")
-
-    media = extract_media(message.reply_to_message)
-    if not media:
-        return await message.reply("invalid media")
-
-    fid = media.file_unique_id
-
-    await NSFW.update_one(
-        {"_id": fid},
-        {"$set": {"sfw": True}},
-        upsert=True
-    )
-
-    await message.reply("marked safe")
-
-
-# ================= AUTO FILTER =================
 
 @app.on_message(
     (filters.photo | filters.video | filters.animation | filters.sticker | filters.document)
