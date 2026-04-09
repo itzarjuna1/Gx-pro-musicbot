@@ -7,22 +7,33 @@ import httpx
 from pyrogram import filters
 from pyrogram.types import Message
 from pyrogram.errors import RPCError, MessageDeleteForbidden
+from pyrogram.enums import ChatMemberStatus
 
 from EsproMusic import app
-from EsproMusic.core.mongo import groups, NSFW, NSFW_STORAGE
+from EsproMusic.core import groups, NSFW, NSFW_STORAGE
 
 os.makedirs("temp", exist_ok=True)
 
 # ================= ADMIN CHECK =================
 async def is_admin(client, message: Message):
     try:
-        member = await client.get_chat_member(message.chat.id, message.from_user.id)
-        return member.status in ["administrator", "creator"]
+        if not message.from_user:
+            return False
+
+        member = await client.get_chat_member(
+            message.chat.id,
+            message.from_user.id
+        )
+
+        return member.status in (
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.OWNER
+        )
     except:
         return False
 # ===============================================
 
-# NSFW APIs
+# ================= NSFW APIs ====================
 HF_NSFW_API = "https://nexacoders-nexa-api.hf.space/scan"
 API4AI_URL = "https://demo.api4ai.cloud/nsfw/v1/results"
 API4AI_KEY = "a4a-p3htHPSXFeCnvAZ21nLkRtRPGUFFTaJV"
@@ -34,6 +45,7 @@ THRESHOLD = {
     "hentai": 50,
     "sexy": 60
 }
+# ===============================================
 
 
 def extract_media(msg: Message):
@@ -181,7 +193,7 @@ async def scan_media(message: Message):
 @app.on_message(filters.command("nsfw") & filters.group)
 async def toggle(client, message: Message):
     if not await is_admin(client, message):
-        return await message.reply("Admins only")
+        return await message.reply("❌ admins only")
 
     if len(message.command) < 2:
         return await message.reply("Usage: /nsfw enable or disable")
@@ -197,18 +209,23 @@ async def toggle(client, message: Message):
         upsert=True
     )
 
-    await message.reply(f"NSFW {'ENABLED' if state=='enable' else 'DISABLED'}")
+    await message.reply(
+        f"NSFW {'ENABLED' if state=='enable' else 'DISABLED'}"
+    )
 
 
 @app.on_message(filters.command("marknsfw") & filters.group)
 async def mark_nsfw(client, message: Message):
     if not await is_admin(client, message):
-        return await message.reply("Admins only")
+        return await message.reply("❌ admins only")
 
     if not message.reply_to_message:
         return await message.reply("Reply to media")
 
     media = extract_media(message.reply_to_message)
+    if not media:
+        return await message.reply("Invalid media")
+
     fid = media.file_unique_id
 
     await NSFW.update_one(
@@ -228,12 +245,15 @@ async def mark_nsfw(client, message: Message):
 @app.on_message(filters.command("unmarknsfw") & filters.group)
 async def unmark(client, message: Message):
     if not await is_admin(client, message):
-        return await message.reply("Admins only")
+        return await message.reply("❌ admins only")
 
     if not message.reply_to_message:
         return await message.reply("Reply to media")
 
     media = extract_media(message.reply_to_message)
+    if not media:
+        return await message.reply("Invalid media")
+
     fid = media.file_unique_id
 
     await NSFW.update_one(
@@ -245,7 +265,11 @@ async def unmark(client, message: Message):
     await message.reply("Marked SAFE")
 
 
-@app.on_message((filters.photo | filters.video | filters.animation | filters.sticker) & filters.group, group=-1)
+@app.on_message(
+    (filters.photo | filters.video | filters.animation | filters.sticker)
+    & filters.group,
+    group=-1
+)
 async def auto(client, message: Message):
     grp = await groups.find_one({"_id": message.chat.id})
     if not grp or not grp.get("nsfw"):
