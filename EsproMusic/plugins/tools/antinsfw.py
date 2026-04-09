@@ -4,8 +4,9 @@ import subprocess
 from PIL import Image
 import httpx
 
-from lottie.importers import import_tgs
-from lottie.exporters import export_png
+# ✅ FIXED IMPORTS
+from lottie.importers.tgs import import_tgs
+from lottie.exporters.png import export_png
 
 from pyrogram import filters
 from pyrogram.types import Message
@@ -51,7 +52,7 @@ def extract_media(msg: Message):
     )
 
 
-# ================= STICKER (ADVANCED) =================
+# ================= STICKER =================
 async def process_sticker(message: Message, fid: str):
     tmp = await message.download(f"temp/{fid}")
 
@@ -129,7 +130,6 @@ async def scan_api4ai(path):
 
 
 def is_nsfw(res):
-    # 🔥 slightly stronger hentai detection
     if res["hentai"] > 2:
         return True
 
@@ -253,7 +253,6 @@ async def scan_cmd(client, message: Message):
     )
 
 
-# 🔥 blacklist sticker pack
 @app.on_message(filters.command("blsticker") & filters.group)
 async def bl_sticker(client, message: Message):
     if not await is_admin(client, message):
@@ -289,7 +288,6 @@ async def auto(client, message: Message):
     if not grp or not grp.get("nsfw"):
         return
 
-    # 🔥 pack blacklist
     if message.sticker:
         pack = message.sticker.set_name
         if pack and pack in grp.get("bl_stickers", []):
