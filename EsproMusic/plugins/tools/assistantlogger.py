@@ -1,110 +1,51 @@
+# EsproMusic/plugins/tools/assistantlogger.py
 import asyncio
-import time
-
-from pyrogram import Client, filters
+from pyrogram import filters
 from pyrogram.types import Message
-from pytgcalls.types import Update, GroupCallParticipant
+from pyrogram.raw import functions
+from pyrogram.raw.functions.phone import GetGroupCall
+from pyrogram.raw.types import InputGroupCall
+from pytgcalls import PyTgCalls
+from pytgcalls.types import Update
+from EsproMusic.core.userbot import Userbot, assistants
 
-# IMPORT YOUR ASSISTANT (USERBOT)
-from EsproMusic.core.userbot import assistants as assistant
+# Initialize PyTgCalls for each assistant
+calls = []
 
-# ================= CONFIG ================= #
+for idx, client_num in enumerate(assistants):
+    # get actual Client instance from Userbot
+    client_instance = getattr(Userbot(), f"{['one','two','three','four','five'][client_num-1]}")
+    calls.append(PyTgCalls(client_instance))
 
-USER_COOLDOWN = 30  # seconds
-VC_LOGGER = {}
-JOIN_COOLDOWN = {}
+async def tts_vc_logger(client: Userbot, call: PyTgCalls):
+    @client.one.on_raw_update()
+    async def handler(update, users):
+        # Only listen for voice chat join updates
+        if hasattr(update, "participants") and update.participants:
+            for p in update.participants:
+                user_id = p.user_id
+                username = users.get(user_id).first_name if users.get(user_id) else str(user_id)
+                # send TTS message
+                msg = await client.one.send_message(
+                    chat_id=call.chat_id,
+                    text=f"/tts {username} has joined vc"
+                )
+                # automatically playforce TTS reply
+                await asyncio.sleep(1)
+                tts_reply = (await client.one.get_chat_history(call.chat_id, limit=1))[0]
+                await client.one.send_message(
+                    chat_id=call.chat_id,
+                    text=f"/playforce {tts_reply.message_id}"
+                )
+                # delete command msg after sending
+                await msg.delete()
 
-# ========================================== #
+async def main():
+    userbot = Userbot()
+    await userbot.start()
+    for call in calls:
+        await tts_vc_logger(userbot, call)
 
-
-def can_announce(user_id: int) -> bool:
-    now = time.time()
-    if user_id in JOIN_COOLDOWN:
-        if now - JOIN_COOLDOWN[user_id] < USER_COOLDOWN:
-            return False
-    JOIN_COOLDOWN[user_id] = now
-    return True
-
-
-async def wait_for_tts_reply(chat_id: int, reply_to_id: int, timeout: int = 20):
-    """Wait for TTS reply (audio/voice)"""
-    for _ in range(timeout):
-        async for msg in assistant.get_chat_history(chat_id, limit=10):
-            if msg.reply_to_message_id == reply_to_id and (msg.audio or msg.voice):
-                return msg
-        await asyncio.sleep(1)
-    return None
-
-
-async def handle_join(chat_id: int, user_id: int):
-    try:
-        if not VC_LOGGER.get(chat_id, False):
-            return
-
-        if not can_announce(user_id):
-            return
-
-        user = await assistant.get_users(user_id)
-        name = user.first_name or "User"
-
-        text = f"{name} has joined the voice chat"
-
-        # send TTS command
-        tts_msg = await assistant.send_message(chat_id, f"/tts {text}")
-
-        # wait for TTS reply
-        tts_reply = await wait_for_tts_reply(chat_id, tts_msg.id)
-
-        if not tts_reply:
-            return
-
-        # DELETE the original /tts command msg
-        try:
-            await tts_msg.delete()
-        except:
-            pass  # ignore if cannot delete
-
-        # force play that audio
-        await assistant.send_message(
-            chat_id,
-            "/playforce",
-            reply_to_message_id=tts_reply.id
-        )
-
-    except Exception as e:
-        print(f"[VC LOGGER ERROR]: {e}")
-
-
-# ================= RAW VC LISTENER ================= #
-
-@assistant.on_raw_update()
-async def vc_logger_handler(_, update: Update, users, chats):
-    try:
-        if not hasattr(update, "participants"):
-            return
-
-        chat_id = getattr(update, "chat_id", None)
-        if not chat_id:
-            return
-
-        for participant in update.participants:
-            if isinstance(participant, GroupCallParticipant):
-                if getattr(participant, "just_joined", False):
-                    user_id = participant.user_id
-                    await handle_join(chat_id, user_id)
-
-    except Exception as e:
-        print(f"[VC RAW ERROR]: {e}")
-
-
-# ================= TOGGLE COMMAND ================= #
-
-@Client.on_message(filters.command("vclogger"))
-async def toggle_vc_logger(client: Client, message: Message):
-    chat_id = message.chat.id
-
-    current = VC_LOGGER.get(chat_id, False)
-    VC_LOGGER[chat_id] = not current
-
-    status = "Enabled" if VC_LOGGER[chat_id] else "Disabled"
-    await message.reply_text(f"VC Logger: {status}")
+if __name__ == "__main__":
+    import asyncio
+    asyncio.get_event_loop().run_until_complete(main())
