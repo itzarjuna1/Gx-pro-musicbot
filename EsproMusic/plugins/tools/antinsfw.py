@@ -20,14 +20,15 @@ API4AI_KEY = "a4a-p3htHPSXFeCnvAZ21nLkRtRPGUFFTaJV"
 
 TIMEOUT = httpx.Timeout(20.0, connect=10.0)
 
+# ✅ balanced aggressive
 THRESHOLD = {
-    "porn": 50,
-    "hentai": 50,
-    "sexy": 60
+    "porn": 3,
+    "hentai": 3,
+    "sexy": 5
 }
 
 
-# ✅ admin check (replacement)
+# ================= ADMIN =================
 async def is_admin(client, message: Message):
     try:
         member = await client.get_chat_member(
@@ -44,36 +45,44 @@ async def is_admin(client, message: Message):
 
 def extract_media(msg: Message):
     return (
-        msg.photo or msg.video or msg.animation or msg.sticker or
-        (msg.document if msg.document and msg.document.mime_type == "image/gif" else None)
+        msg.photo or msg.video or msg.animation or msg.sticker or msg.document
     )
 
 
+# ================= STICKER =================
 async def process_sticker(message: Message, fid: str):
     tmp = await message.download(f"temp/{fid}")
 
     if tmp.endswith(".webp"):
-        img = Image.open(tmp).convert("RGB")
-        path = f"temp/{fid}.jpg"
-        img.save(path, "JPEG")
-        os.remove(tmp)
-        return path
+        try:
+            img = Image.open(tmp).convert("RGB")
+            path = f"temp/{fid}.jpg"
+            img.save(path, "JPEG")
+            os.remove(tmp)
+            return path
+        except:
+            os.remove(tmp)
+            return None
 
     if tmp.endswith(".tgs"):
         os.remove(tmp)
-        return None
+        return "SKIP"
 
     return tmp
 
 
+# ================= API =================
 async def scan_hf(path):
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             with open(path, "rb") as f:
                 r = await client.post(HF_NSFW_API, files={"file": f})
+
         if r.status_code != 200:
             return None
+
         s = r.json().get("scores", {})
+
         return {
             "porn": s.get("porn", 0) * 100,
             "hentai": s.get("hentai", 0) * 100,
@@ -92,10 +101,13 @@ async def scan_api4ai(path):
                     headers={"A4AI-KEY": API4AI_KEY},
                     files={"image": f}
                 )
+
         if r.status_code != 200:
             return None
+
         data = r.json()
         e = data["results"][0]["entities"][0]["classes"]
+
         return {
             "porn": e.get("porn", 0) * 100,
             "hentai": e.get("hentai", 0) * 100,
@@ -113,6 +125,7 @@ def is_nsfw(res):
     )
 
 
+# ================= SCAN =================
 async def scan_media(message: Message):
     media = extract_media(message)
     if not media:
@@ -131,17 +144,23 @@ async def scan_media(message: Message):
 
         elif message.sticker:
             path = await process_sticker(message, fid)
+
+            if path == "SKIP":
+                return {"_id": fid, "sfw": True}
+
             if not path:
-                return {"_id": fid, "sfw": False, "results": {"porn": 100, "hentai": 100, "sexy": 100}}
+                return {"error": True}
 
         else:
             tmp = await message.download(f"temp/{fid}")
             path = f"temp/{fid}.jpg"
+
             subprocess.run(
                 ["ffmpeg", "-i", tmp, "-frames:v", "1", path],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
+
             if os.path.exists(tmp):
                 os.remove(tmp)
 
@@ -182,10 +201,12 @@ async def scan_media(message: Message):
             os.remove(path)
 
 
+# ================= COMMANDS =================
+
 @app.on_message(filters.command("nsfw") & filters.group)
 async def toggle(client, message: Message):
     if not await is_admin(client, message):
-        return await message.reply("Admins only")
+        return await message.reply("admins only")
 
     if len(message.command) < 2:
         return await message.reply("/nsfw on or off")
@@ -198,31 +219,73 @@ async def toggle(client, message: Message):
         upsert=True
     )
 
-    await message.reply(f"NSFW {'ON' if state=='on' else 'OFF'}")
+    await message.reply(f"nsfw {'on' if state=='on' else 'off'}")
 
 
 @app.on_message(filters.command("scan") & filters.group)
 async def scan_cmd(client, message: Message):
     if not message.reply_to_message:
-        return await message.reply("Reply to media")
+        return await message.reply("reply to media")
 
     r = await scan_media(message.reply_to_message)
 
     if "error" in r:
-        return await message.reply("Error scanning")
+        return await message.reply("scan failed")
 
     d = r["results"]
 
     await message.reply(
-        f"NSFW 🔞\n\nPorn: {d['porn']:.1f}%\nHentai: {d['hentai']:.1f}%\nSexy: {d['sexy']:.1f}%"
+        f"nsfw\n\nporn: {d['porn']:.1f}%\n"
+        f"hentai: {d['hentai']:.1f}%\n"
+        f"sexy: {d['sexy']:.1f}%"
     )
 
 
-@app.on_message((filters.photo | filters.video | filters.animation | filters.sticker) & filters.group, group=-1)
+# 🔥 NEW: blacklist sticker pack
+@app.on_message(filters.command("blsticker") & filters.group)
+async def bl_sticker(client, message: Message):
+    if not await is_admin(client, message):
+        return await message.reply("admins only")
+
+    if not message.reply_to_message or not message.reply_to_message.sticker:
+        return await message.reply("reply to a sticker")
+
+    pack = message.reply_to_message.sticker.set_name
+
+    if not pack:
+        return await message.reply("no pack found")
+
+    await groups.update_one(
+        {"_id": message.chat.id},
+        {"$addToSet": {"bl_stickers": pack}},
+        upsert=True
+    )
+
+    await message.reply("sticker pack blacklisted")
+
+
+# ================= AUTO =================
+
+@app.on_message(
+    (filters.photo | filters.video | filters.animation | filters.sticker | filters.document)
+    & filters.group,
+    group=0
+)
 async def auto(client, message: Message):
     grp = await groups.find_one({"_id": message.chat.id})
+
     if not grp or not grp.get("nsfw"):
         return
+
+    # 🔥 check blacklisted sticker packs
+    if message.sticker:
+        pack = message.sticker.set_name
+        if pack and pack in grp.get("bl_stickers", []):
+            try:
+                await message.delete()
+                return
+            except:
+                return
 
     r = await scan_media(message)
 
@@ -230,58 +293,13 @@ async def auto(client, message: Message):
         return
 
     try:
-        warn = await message.reply("🚫 NSFW detected & removed")
         await message.delete()
+        warn = await message.reply("nsfw detected & removed")
     except (RPCError, MessageDeleteForbidden):
         return
 
-    await asyncio.sleep(10)
+    await asyncio.sleep(5)
     try:
         await warn.delete()
     except:
         pass
-
-
-@app.on_message(filters.command("marknsfw") & filters.group)
-async def mark_nsfw(client, message: Message):
-    if not await is_admin(client, message):
-        return await message.reply("Admins only")
-
-    if not message.reply_to_message:
-        return await message.reply("Reply to media")
-
-    media = extract_media(message.reply_to_message)
-    fid = media.file_unique_id
-
-    await NSFW.update_one(
-        {"_id": fid},
-        {"$set": {"sfw": False}},
-        upsert=True
-    )
-
-    try:
-        await message.reply_to_message.forward(NSFW_STORAGE)
-    except:
-        pass
-
-    await message.reply("Marked NSFW")
-
-
-@app.on_message(filters.command("unmarknsfw") & filters.group)
-async def unmark(client, message: Message):
-    if not await is_admin(client, message):
-        return await message.reply("Admins only")
-
-    if not message.reply_to_message:
-        return await message.reply("Reply to media")
-
-    media = extract_media(message.reply_to_message)
-    fid = media.file_unique_id
-
-    await NSFW.update_one(
-        {"_id": fid},
-        {"$set": {"sfw": True}},
-        upsert=True
-    )
-
-    await message.reply("Marked SAFE")
