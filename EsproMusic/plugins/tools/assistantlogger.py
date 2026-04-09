@@ -3,8 +3,7 @@ import time
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from pytgcalls.types import Update
-from pytgcalls.types.chats import GroupCallParticipant
+from pytgcalls.types import Update, GroupCallParticipant
 
 # IMPORT YOUR ASSISTANT (USERBOT)
 from EsproMusic.core.userbot import userbot as assistant
@@ -58,6 +57,12 @@ async def handle_join(chat_id: int, user_id: int):
 
         if not tts_reply:
             return
+
+        # DELETE the original /tts command msg
+        try:
+            await tts_msg.delete()
+        except:
+            pass  # ignore if cannot delete
 
         # force play that audio
         await assistant.send_message(
