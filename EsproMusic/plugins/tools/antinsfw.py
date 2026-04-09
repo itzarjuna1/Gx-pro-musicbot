@@ -7,6 +7,7 @@ import httpx
 from pyrogram import filters
 from pyrogram.types import Message
 from pyrogram.errors import RPCError, MessageDeleteForbidden
+from pyrogram.enums import ChatMemberStatus
 
 from EsproMusic import app
 from EsproMusic.core.mongo import groups, NSFW, NSFW_STORAGE
@@ -24,6 +25,21 @@ THRESHOLD = {
     "hentai": 50,
     "sexy": 60
 }
+
+
+# ✅ admin check (replacement)
+async def is_admin(client, message: Message):
+    try:
+        member = await client.get_chat_member(
+            message.chat.id,
+            message.from_user.id
+        )
+        return member.status in (
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.OWNER
+        )
+    except:
+        return False
 
 
 def extract_media(msg: Message):
@@ -151,7 +167,6 @@ async def scan_media(message: Message):
             "sfw": sfw
         }
 
-        # fixed indentation only
         await NSFW.update_one({"_id": fid}, {"$set": doc}, upsert=True)
 
         if not sfw:
@@ -167,8 +182,11 @@ async def scan_media(message: Message):
             os.remove(path)
 
 
-@app.on_message(filters.command("nsfw") & filters.group & filters.chat_admins)
+@app.on_message(filters.command("nsfw") & filters.group)
 async def toggle(client, message: Message):
+    if not await is_admin(client, message):
+        return await message.reply("Admins only")
+
     if len(message.command) < 2:
         return await message.reply("/nsfw on or off")
 
@@ -224,8 +242,11 @@ async def auto(client, message: Message):
         pass
 
 
-@app.on_message(filters.command("marknsfw") & filters.group & filters.chat_admins)
+@app.on_message(filters.command("marknsfw") & filters.group)
 async def mark_nsfw(client, message: Message):
+    if not await is_admin(client, message):
+        return await message.reply("Admins only")
+
     if not message.reply_to_message:
         return await message.reply("Reply to media")
 
@@ -246,8 +267,11 @@ async def mark_nsfw(client, message: Message):
     await message.reply("Marked NSFW")
 
 
-@app.on_message(filters.command("unmarknsfw") & filters.group & filters.chat_admins)
+@app.on_message(filters.command("unmarknsfw") & filters.group)
 async def unmark(client, message: Message):
+    if not await is_admin(client, message):
+        return await message.reply("Admins only")
+
     if not message.reply_to_message:
         return await message.reply("Reply to media")
 
