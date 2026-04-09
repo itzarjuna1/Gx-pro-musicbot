@@ -10,7 +10,7 @@ from pyrogram.errors import RPCError, MessageDeleteForbidden
 from pyrogram.enums import ChatMemberStatus
 
 from EsproMusic import app
-from EsproMusic.core import groups, NSFW, NSFW_STORAGE
+from EsproMusic.core.mongo import groups, NSFW, NSFW_STORAGE
 
 os.makedirs("temp", exist_ok=True)
 
