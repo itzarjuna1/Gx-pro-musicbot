@@ -1,51 +1,79 @@
-# EsproMusic/plugins/tools/assistantlogger.py
-import asyncio
-from pyrogram import filters
+
+from pyrogram import Client, filters
 from pyrogram.types import Message
-from pyrogram.raw import functions
-from pyrogram.raw.functions.phone import GetGroupCall
-from pyrogram.raw.types import InputGroupCall
-from pytgcalls import PyTgCalls
-from pytgcalls.types import Update
 from EsproMusic.core.userbot import Userbot, assistants
+from gtts import gTTS
+import asyncio
+import os
 
-# Initialize PyTgCalls for each assistant
-calls = []
+userbot = Userbot()
 
-for idx, client_num in enumerate(assistants):
-    # get actual Client instance from Userbot
-    client_instance = getattr(Userbot(), f"{['one','two','three','four','five'][client_num-1]}")
-    calls.append(PyTgCalls(client_instance))
+async def tts_and_play(client: Client, chat_id: int, username: str):
+    """Generate TTS and play in VC with fallback"""
+    text = f"{username} has joined VC"
+    tts_file = f"tts_{chat_id}.mp3"
+    
+    # generate TTS
+    tts = gTTS(text=text, lang="en")
+    tts.save(tts_file)
 
-async def tts_vc_logger(client: Userbot, call: PyTgCalls):
-    @client.one.on_raw_update()
-    async def handler(update, users):
-        # Only listen for voice chat join updates
-        if hasattr(update, "participants") and update.participants:
-            for p in update.participants:
-                user_id = p.user_id
-                username = users.get(user_id).first_name if users.get(user_id) else str(user_id)
-                # send TTS message
-                msg = await client.one.send_message(
-                    chat_id=call.chat_id,
-                    text=f"/tts {username} has joined vc"
-                )
-                # automatically playforce TTS reply
-                await asyncio.sleep(1)
-                tts_reply = (await client.one.get_chat_history(call.chat_id, limit=1))[0]
-                await client.one.send_message(
-                    chat_id=call.chat_id,
-                    text=f"/playforce {tts_reply.message_id}"
-                )
-                # delete command msg after sending
-                await msg.delete()
+    # send TTS message
+    msg = await client.send_message(chat_id, f"/tts {text}")
+    
+    # determine which play command to use
+    try:
+        # If a song is already playing, use /playforce
+        if client.is_connected:  # check if bot is connected to VC
+            await client.send_message(chat_id, f"/playforce {msg.message_id}")
+        else:
+            # fallback to normal play
+            await client.send_message(chat_id, f"/play {tts_file}")
+    except Exception:
+        # fallback if any error occurs
+        await client.send_message(chat_id, f"/play {tts_file}")
 
-async def main():
-    userbot = Userbot()
-    await userbot.start()
-    for call in calls:
-        await tts_vc_logger(userbot, call)
+    # delete the command message
+    try:
+        await msg.delete()
+    except:
+        pass
 
-if __name__ == "__main__":
-    import asyncio
-    asyncio.get_event_loop().run_until_complete(main())
+    # remove local file
+    if os.path.exists(tts_file):
+        os.remove(tts_file)
+
+
+# Pyrogram handler for when someone joins VC
+@userbot.one.on_raw_update()
+async def vc_logger_handler(_, update, users, chats):
+    """Detect VC joins and trigger TTS"""
+    try:
+        from pytgcalls.types import Update
+        from pytgcalls.types.chats import GroupCallParticipant
+
+        if isinstance(update, GroupCallParticipant) and update.joined:
+            user_id = update.user_id
+            # fetch username or fallback to user_id
+            user = await userbot.one.get_users(user_id)
+            username = user.first_name if user.first_name else str(user_id)
+            await tts_and_play(userbot.one, update.chat_id, username)
+    except Exception as e:
+        print(f"VC Logger Error: {e}")
+
+
+# repeat handler registration for other assistants
+for idx, client in enumerate([userbot.two, userbot.three, userbot.four, userbot.five], start=2):
+    if client:
+        @client.on_raw_update()
+        async def vc_logger_handler_multi(_, update, users, chats, client=client):
+            try:
+                from pytgcalls.types import Update
+                from pytgcalls.types.chats import GroupCallParticipant
+
+                if isinstance(update, GroupCallParticipant) and update.joined:
+                    user_id = update.user_id
+                    user = await client.get_users(user_id)
+                    username = user.first_name if user.first_name else str(user_id)
+                    await tts_and_play(client, update.chat_id, username)
+            except Exception as e:
+                print(f"VC Logger Error (Assistant {idx}): {e}")
