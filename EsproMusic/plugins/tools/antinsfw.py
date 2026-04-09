@@ -4,10 +4,6 @@ import subprocess
 from PIL import Image
 import httpx
 
-# ✅ FIXED IMPORTS
-from lottie.importers.tgs import import_tgs
-from lottie.exporters.png import export_png
-
 from pyrogram import filters
 from pyrogram.types import Message
 from pyrogram.errors import RPCError, MessageDeleteForbidden
@@ -68,17 +64,10 @@ async def process_sticker(message: Message, fid: str):
             os.remove(tmp)
             return None
 
-    # animated sticker (.tgs → png)
+    # animated sticker → skip
     if tmp.endswith(".tgs"):
-        try:
-            anim = import_tgs(tmp)
-            path = f"temp/{fid}.png"
-            export_png(anim, path, frame=0)
-            os.remove(tmp)
-            return path
-        except:
-            os.remove(tmp)
-            return None
+        os.remove(tmp)
+        return "SKIP"
 
     return tmp
 
@@ -135,7 +124,6 @@ def is_nsfw(res):
 
     return (
         res["porn"] >= THRESHOLD["porn"] or
-        res["hentai"] >= THRESHOLD["hentai"] or
         res["sexy"] >= THRESHOLD["sexy"]
     )
 
@@ -160,7 +148,10 @@ async def scan_media(message: Message):
         elif message.sticker:
             path = await process_sticker(message, fid)
 
-            if not path or not os.path.exists(path):
+            if path == "SKIP":
+                return {"_id": fid, "sfw": False}  # 🔥 force delete animated
+
+            if not path:
                 return {"error": True}
 
         else:
@@ -220,9 +211,6 @@ async def toggle(client, message: Message):
     if not await is_admin(client, message):
         return await message.reply("admins only")
 
-    if len(message.command) < 2:
-        return await message.reply("/nsfw on or off")
-
     state = message.command[1].lower()
 
     await groups.update_one(
@@ -234,68 +222,12 @@ async def toggle(client, message: Message):
     await message.reply(f"nsfw {'on' if state=='on' else 'off'}")
 
 
-@app.on_message(filters.command("scan") & filters.group)
-async def scan_cmd(client, message: Message):
-    if not message.reply_to_message:
-        return await message.reply("reply to media")
-
-    r = await scan_media(message.reply_to_message)
-
-    if "error" in r:
-        return await message.reply("scan failed")
-
-    d = r["results"]
-
-    await message.reply(
-        f"nsfw\n\nporn: {d['porn']:.1f}%\n"
-        f"hentai: {d['hentai']:.1f}%\n"
-        f"sexy: {d['sexy']:.1f}%"
-    )
-
-
-@app.on_message(filters.command("blsticker") & filters.group)
-async def bl_sticker(client, message: Message):
-    if not await is_admin(client, message):
-        return await message.reply("admins only")
-
-    if not message.reply_to_message or not message.reply_to_message.sticker:
-        return await message.reply("reply to a sticker")
-
-    pack = message.reply_to_message.sticker.set_name
-
-    if not pack:
-        return await message.reply("no pack found")
-
-    await groups.update_one(
-        {"_id": message.chat.id},
-        {"$addToSet": {"bl_stickers": pack}},
-        upsert=True
-    )
-
-    await message.reply("sticker pack blacklisted")
-
-
-# ================= AUTO =================
-
-@app.on_message(
-    (filters.photo | filters.video | filters.animation | filters.sticker | filters.document)
-    & filters.group,
-    group=0
-)
+@app.on_message((filters.photo | filters.video | filters.animation | filters.sticker) & filters.group)
 async def auto(client, message: Message):
     grp = await groups.find_one({"_id": message.chat.id})
 
     if not grp or not grp.get("nsfw"):
         return
-
-    if message.sticker:
-        pack = message.sticker.set_name
-        if pack and pack in grp.get("bl_stickers", []):
-            try:
-                await message.delete()
-                return
-            except:
-                return
 
     r = await scan_media(message)
 
@@ -304,12 +236,5 @@ async def auto(client, message: Message):
 
     try:
         await message.delete()
-        warn = await message.reply("nsfw detected & removed")
-    except (RPCError, MessageDeleteForbidden):
-        return
-
-    await asyncio.sleep(5)
-    try:
-        await warn.delete()
     except:
         pass
