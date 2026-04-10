@@ -5,7 +5,7 @@ from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from pyrogram.enums import ChatMemberStatus
 from pymongo import MongoClient
-
+from pyrogram.enums import ButtonStyle
 from EsproMusic import app
 from config import MONGO_DB_URI
 
@@ -18,15 +18,15 @@ PAGE_SIZE = 9
 
 # ================== LOCK DATA ==================
 LOCKS = {
-    "photo": "ʙʟᴏᴄᴋs ᴀʟʟ ᴘʜᴏᴛᴏs",
-    "video": "ʙʟᴏᴄᴋs ᴀʟʟ ᴠɪᴅᴇᴏs",
-    "audio": "ʙʟᴏᴄᴋs ᴀᴜᴅɪᴏ",
-    "document": "ʙʟᴏᴄᴋs ғɪʟᴇs",
-    "url": "ʙʟᴏᴄᴋs ʟɪɴᴋs",
-    "forward": "ɴᴏ ғᴏʀᴡᴀʀᴅs",
-    "inline": "ʙʟᴏᴄᴋs ɪɴʟɪɴᴇ ʙᴏᴛs",
-    "button": "ʙʟᴏᴄᴋs ʙᴜᴛᴛᴏɴs",
-    "gif": "ʙʟᴏᴄᴋs ɢɪғs"
+    "ᴘʜᴏᴛᴏ": "ʙʟᴏᴄᴋs ᴀʟʟ ᴘʜᴏᴛᴏs",
+    "ᴠɪᴅᴇᴏ": "ʙʟᴏᴄᴋs ᴀʟʟ ᴠɪᴅᴇᴏs",
+    "ᴀᴜᴅɪᴏ": "ʙʟᴏᴄᴋs ᴀᴜᴅɪᴏ",
+    "ᴅᴏᴄᴜᴍᴇɴᴛ": "ʙʟᴏᴄᴋs ғɪʟᴇs",
+    "ᴜʀʟ": "ʙʟᴏᴄᴋs ʟɪɴᴋs",
+    "ғᴏʀᴡᴀʀᴅ": "ɴᴏ ғᴏʀᴡᴀʀᴅs",
+    "ɪɴʟɪɴᴇ": "ʙʟᴏᴄᴋs ɪɴʟɪɴᴇ ʙᴏᴛs",
+    "ʙᴜᴛᴛᴏɴ": "ʙʟᴏᴄᴋs ʙᴜᴛᴛᴏɴs",
+    "ɢɪғ": "ʙʟᴏᴄᴋs ɢɪғs"
 }
 
 LOCK_LIST = list(LOCKS.keys())
@@ -84,7 +84,8 @@ def build_panel(chat_id, page=0):
         row.append(
             InlineKeyboardButton(
                 format_status(lock, lock in locks),
-                callback_data=f"view_{lock}_{page}"
+                callback_data=f"view_{lock}_{page}",
+                style=ButtonStyle.PRIMARY
             )
         )
         if i % 3 == 0:
@@ -103,7 +104,7 @@ def build_panel(chat_id, page=0):
     if nav:
         buttons.append(nav)
 
-    buttons.append([InlineKeyboardButton("🚫 ᴜɴʟᴏᴄᴋ ᴀʟʟ", callback_data="unlock_all")])
+    buttons.append([InlineKeyboardButton("🚫 ᴜɴʟᴏᴄᴋ ᴀʟʟ", callback_data="unlock_all", style=ButtonStyle.SUCCESS)])
 
     return InlineKeyboardMarkup(buttons)
 
@@ -142,7 +143,7 @@ async def unlockall_cmd(client, message: Message):
         return await message.reply("admins only")
 
     unlock_all(message.chat.id)
-    await message.reply("all locks removed")
+    await message.reply("ᴀʟʟ ʀᴇsᴛʀɪᴄᴛɪᴏɴs ʀᴇᴍᴏᴠᴇᴅ .. ᴜsᴇʀs ᴀʀᴇ ғʀᴇᴇ ʀᴏɢᴇʀ🌷")
 
 # ================== CALLBACK ==================
 @app.on_callback_query()
@@ -181,9 +182,11 @@ async def callbacks(client, query):
         await query.message.edit_text(
             detail_text(lock, lock in locks),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("toggle", callback_data=f"toggle_{lock}_{page}")],
-                [InlineKeyboardButton("back", callback_data=f"page_{page}")]
-            ])
+                [
+                    InlineKeyboardButton("ᴛᴏɢɢʟᴇ ᴏɴ|ᴏғғ", callback_data=f"toggle_{lock}_{page}", style=ButtonStyle.SUCCESS),
+                    InlineKeyboardButton("💗ʙᴀᴄᴋ", callback_data=f"page_{page}")
+                ]
+        ]
         )
 
     elif data.startswith("toggle_"):
@@ -193,8 +196,8 @@ async def callbacks(client, query):
         await query.message.edit_text(
             detail_text(lock, status),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("toggle", callback_data=f"toggle_{lock}_{page}")],
-                [InlineKeyboardButton("back", callback_data=f"page_{page}")]
+                [InlineKeyboardButton("Tᴏɢɢʟᴇ ᴏɴ|ᴏғғ", callback_data=f"toggle_{lock}_{page}", style=ButtonStyle.PRIMARY)],
+                [InlineKeyboardButton("💗ʙᴀᴄᴋ", callback_data=f"page_{page}", style=ButtonStyle.SCCESS)]
             ])
         )
 
