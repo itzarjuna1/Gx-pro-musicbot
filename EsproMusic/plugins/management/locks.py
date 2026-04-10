@@ -185,10 +185,10 @@ async def callbacks(client, query):
                 [
                     InlineKeyboardButton("ᴛᴏɢɢʟᴇ ᴏɴ|ᴏғғ", callback_data=f"toggle_{lock}_{page}", style=ButtonStyle.SUCCESS),
                     InlineKeyboardButton("💗ʙᴀᴄᴋ", callback_data=f"page_{page}")
-                ]
-        ]
-        )
-
+                ],
+        ]) 
+        
+ 
     elif data.startswith("toggle_"):
         _, lock, page = data.split("_")
         status = toggle_lock(chat_id, lock)
