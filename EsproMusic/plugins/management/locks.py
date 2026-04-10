@@ -1,41 +1,35 @@
-# ================== ULTRA AESTHETIC LOCK SYSTEM ==================
+# ================== ULTRA AESTHETIC LOCK SYSTEM (PYROGRAM) ==================
 
 import re
-from telegram import (
-    Update, InlineKeyboardButton, InlineKeyboardMarkup
-)
-from telegram.ext import (
-    CommandHandler, CallbackQueryHandler,
-    MessageHandler, Filters, CallbackContext
-)
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pymongo import MongoClient
 
-# ✅ IMPORT FROM CONFIG
+# ========= CONFIG =========
 from config import MONGO_DB_URI
-
-# ================== CONFIG ==================
-PAGE_SIZE = 9
 
 mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 locks_db = db["locks"]
 
-# ================== LOCK DATA ==================
+PAGE_SIZE = 9
+
+# ========= LOCK DATA =========
 LOCKS = {
     "photo": "ʙʟᴏᴄᴋs ᴀʟʟ ᴘʜᴏᴛᴏs",
     "video": "ʙʟᴏᴄᴋs ᴀʟʟ ᴠɪᴅᴇᴏs",
-    "audio": "ʙʟᴏᴄᴋs ᴀʟʟ ᴀᴜᴅɪᴏ",
+    "audio": "ʙʟᴏᴄᴋs ᴀᴜᴅɪᴏ",
     "document": "ʙʟᴏᴄᴋs ғɪʟᴇs",
-    "url": "ʙʟᴏᴄᴋs ᴀʟʟ ʟɪɴᴋs",
-    "forward": "ᴘʀᴇᴠᴇɴᴛs ғᴏʀᴡᴀʀᴅs",
+    "url": "ʙʟᴏᴄᴋs ʟɪɴᴋs",
+    "forward": "ɴᴏ ғᴏʀᴡᴀʀᴅs",
     "inline": "ʙʟᴏᴄᴋs ɪɴʟɪɴᴇ ʙᴏᴛs",
-    "button": "ʀᴇᴍᴏᴠᴇs ʙᴜᴛᴛᴏɴ ᴍᴇssᴀɢᴇs",
+    "button": "ʙʟᴏᴄᴋs ʙᴜᴛᴛᴏɴs",
     "gif": "ʙʟᴏᴄᴋs ɢɪғs"
 }
 
 LOCK_LIST = list(LOCKS.keys())
 
-# ================== DB ==================
+# ========= DB =========
 def get_locks(chat_id):
     data = locks_db.find_one({"chat_id": chat_id})
     return data["locks"] if data else []
@@ -54,7 +48,7 @@ def toggle_lock(chat_id, lock):
         )
         return True
 
-# ================== UI ==================
+# ========= UI =========
 def format_status(lock, enabled):
     return f"🟢 {lock}" if enabled else f"🔴 {lock}"
 
@@ -93,47 +87,40 @@ def build_panel(chat_id, page=0):
 
     return InlineKeyboardMarkup(buttons)
 
-# ================== TEXT ==================
+# ========= TEXT =========
 def main_text():
     return (
-        "╭─〔 🔐 ʟᴏᴄᴋ ᴄᴏɴᴛʀᴏʟ ᴘᴀɴᴇʟ 〕─╮\n"
-        "│\n"
+        "╭─〔 🔐 ʟᴏᴄᴋ ᴄᴏɴᴛʀᴏʟ 〕─╮\n"
         "│ ᴛᴀᴘ ᴀ ʟᴏᴄᴋ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ\n"
-        "│ ᴍᴀɴᴀɢᴇ ʏᴏᴜʀ ɢʀᴏᴜᴘ sᴇᴄᴜʀɪᴛʏ\n"
-        "│\n"
-        "╰────────────────────╯"
+        "╰────────────────╯"
     )
 
 def detail_text(lock, enabled):
     state = "🟢 ᴇɴᴀʙʟᴇᴅ" if enabled else "🔴 ᴅɪsᴀʙʟᴇᴅ"
     return (
         f"╭─〔 ⚙️ {lock} 〕─╮\n"
-        f"│\n"
-        f"│ 📖 {LOCKS[lock]}\n"
-        f"│\n"
-        f"│ sᴛᴀᴛᴜs : {state}\n"
-        f"│\n"
+        f"│ {LOCKS[lock]}\n"
+        f"│ sᴛᴀᴛᴜs: {state}\n"
         f"╰────────────────╯"
     )
 
-# ================== COMMAND ==================
-def locktypes(update: Update, context: CallbackContext):
-    update.message.reply_text(
+# ========= COMMAND =========
+@Client.on_message(filters.command("locktypes") & filters.group)
+async def locktypes(client, message):
+    await message.reply_text(
         main_text(),
-        reply_markup=build_panel(update.effective_chat.id, 0)
+        reply_markup=build_panel(message.chat.id, 0)
     )
 
-# ================== CALLBACK ==================
-def button_handler(update: Update, context: CallbackContext):
-    query = update.callback_query
-    query.answer()
-
+# ========= CALLBACK =========
+@Client.on_callback_query()
+async def callbacks(client, query):
     data = query.data
     chat_id = query.message.chat.id
 
     if data.startswith("page_"):
         page = int(data.split("_")[1])
-        query.edit_message_text(
+        await query.message.edit_text(
             main_text(),
             reply_markup=build_panel(chat_id, page)
         )
@@ -142,7 +129,7 @@ def button_handler(update: Update, context: CallbackContext):
         _, lock, page = data.split("_")
         locks = get_locks(chat_id)
 
-        query.edit_message_text(
+        await query.message.edit_text(
             detail_text(lock, lock in locks),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🔁 ᴛᴏɢɢʟᴇ", callback_data=f"toggle_{lock}_{page}")],
@@ -154,7 +141,7 @@ def button_handler(update: Update, context: CallbackContext):
         _, lock, page = data.split("_")
         status = toggle_lock(chat_id, lock)
 
-        query.edit_message_text(
+        await query.message.edit_text(
             detail_text(lock, status),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🔁 ᴛᴏɢɢʟᴇ", callback_data=f"toggle_{lock}_{page}")],
@@ -162,47 +149,42 @@ def button_handler(update: Update, context: CallbackContext):
             ])
         )
 
-# ================== ENFORCER ==================
-def enforce(update: Update, context: CallbackContext):
-    msg = update.effective_message
-    chat_id = update.effective_chat.id
-    locks = get_locks(chat_id)
+    await query.answer()
+
+# ========= ENFORCER =========
+@Client.on_message(filters.group)
+async def enforce(client, message):
+    locks = get_locks(message.chat.id)
 
     try:
-        if "photo" in locks and msg.photo:
-            msg.delete()
+        if "photo" in locks and message.photo:
+            await message.delete()
 
-        elif "video" in locks and msg.video:
-            msg.delete()
+        elif "video" in locks and message.video:
+            await message.delete()
 
-        elif "audio" in locks and msg.audio:
-            msg.delete()
+        elif "audio" in locks and message.audio:
+            await message.delete()
 
-        elif "document" in locks and msg.document:
-            msg.delete()
+        elif "document" in locks and message.document:
+            await message.delete()
 
-        elif "gif" in locks and msg.animation:
-            msg.delete()
+        elif "gif" in locks and message.animation:
+            await message.delete()
 
-        elif "forward" in locks and msg.forward_date:
-            msg.delete()
+        elif "forward" in locks and message.forward_date:
+            await message.delete()
 
-        elif "inline" in locks and msg.via_bot:
-            msg.delete()
+        elif "inline" in locks and message.via_bot:
+            await message.delete()
 
-        elif "button" in locks and msg.reply_markup:
-            msg.delete()
+        elif "button" in locks and message.reply_markup:
+            await message.delete()
 
         elif "url" in locks:
-            text = msg.text or msg.caption or ""
+            text = message.text or message.caption or ""
             if re.search(r"(https?://|www\.)", text):
-                msg.delete()
+                await message.delete()
 
     except:
         pass
-
-# ================== SETUP ==================
-def setup(dispatcher):
-    dispatcher.add_handler(CommandHandler("locktypes", locktypes))
-    dispatcher.add_handler(CallbackQueryHandler(button_handler))
-    dispatcher.add_handler(MessageHandler(Filters.all, enforce))
