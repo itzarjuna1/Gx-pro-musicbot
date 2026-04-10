@@ -91,7 +91,7 @@ def help_pannel(_, START: Union[bool, int] = None):
                     text=_["H_B_16"],
                     callback_data="help_callback hb16",
                     style=ButtonStyle.PRIMARY,
-            ]
+            ],
             mark,
         ]
     )
