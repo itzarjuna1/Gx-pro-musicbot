@@ -1,9 +1,9 @@
-from pyrogram import Client, filters
-from pyrogram.raw import functions, types
-from pyrogram.raw.base import Update
-from pyrogram.enums import ChatMemberStatus, ButtonStyle
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from pymongo import MongoClient
+#from pyrogram import Client, filters
+#from pyrogram.raw import functions, types
+#from pyrogram.raw.base import Update
+#from pyrogram.enums import ChatMemberStatus, ButtonStyle
+#from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+#from pymongo import MongoClient
 
 from EsproMusic import app
 from config import MONGO_DB_URI
