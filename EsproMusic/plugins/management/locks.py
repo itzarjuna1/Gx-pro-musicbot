@@ -1,4 +1,4 @@
-# ================== ULTRA LOCK SYSTEM (ESPRO MUSIC COMPATIBLE) ==================
+# ================== ULTRA LOCK SYSTEM (FINAL PRO VERSION) ==================
 
 import re
 from pyrogram import filters
@@ -6,7 +6,6 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pymongo import MongoClient
 
 from EsproMusic import app
-from EsproMusic.utils.filters import command
 from config import MONGO_DB_URI
 
 # ================== MONGO ==================
@@ -31,6 +30,14 @@ LOCKS = {
 
 LOCK_LIST = list(LOCKS.keys())
 
+# ================== ADMIN CHECK ==================
+async def is_admin(client, chat_id, user_id):
+    try:
+        member = await client.get_chat_member(chat_id, user_id)
+        return member.status in ["administrator", "creator"]
+    except:
+        return False
+
 # ================== DB ==================
 def get_locks(chat_id):
     data = locks_db.find_one({"chat_id": chat_id})
@@ -50,6 +57,9 @@ def toggle_lock(chat_id, lock):
         )
         return True
 
+def unlock_all(chat_id):
+    locks_db.delete_one({"chat_id": chat_id})
+
 # ================== UI ==================
 def format_status(lock, enabled):
     return f"🟢 {lock}" if enabled else f"🔴 {lock}"
@@ -61,8 +71,7 @@ def build_panel(chat_id, page=0):
     end = start + PAGE_SIZE
     items = LOCK_LIST[start:end]
 
-    buttons = []
-    row = []
+    buttons, row = [], []
 
     for i, lock in enumerate(items, 1):
         row.append(
@@ -87,12 +96,16 @@ def build_panel(chat_id, page=0):
     if nav:
         buttons.append(nav)
 
+    # unlock all button
+    buttons.append([InlineKeyboardButton("🚫 ᴜɴʟᴏᴄᴋ ᴀʟʟ", callback_data="unlock_all")])
+
     return InlineKeyboardMarkup(buttons)
 
 # ================== TEXT ==================
 def main_text():
     return (
         "╭─〔 🔐 ʟᴏᴄᴋ ᴘᴀɴᴇʟ 〕─╮\n"
+        "│ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴄᴏɴᴛʀᴏʟ\n"
         "│ ᴛᴀᴘ ᴀ ʟᴏᴄᴋ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ\n"
         "╰────────────────╯"
     )
@@ -107,20 +120,44 @@ def detail_text(lock, enabled):
     )
 
 # ================== COMMAND ==================
-@app.on_message(command(["locktypes", "locks"]) & filters.group)
-async def locktypes(_, message):
+@app.on_message(filters.command("locktypes") & filters.group)
+async def locktypes(client, message):
+    if not await is_admin(client, message.chat.id, message.from_user.id):
+        return await message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜsᴇ ᴛʜɪs")
+
     await message.reply_text(
         main_text(),
         reply_markup=build_panel(message.chat.id, 0)
     )
 
+# ================== UNLOCK ALL ==================
+@app.on_message(filters.command("unlockall") & filters.group)
+async def unlockall_cmd(client, message):
+    if not await is_admin(client, message.chat.id, message.from_user.id):
+        return await message.reply_text("❌ ᴀᴅᴍɪɴ ᴏɴʟʏ")
+
+    unlock_all(message.chat.id)
+    await message.reply_text("✅ ᴀʟʟ ʟᴏᴄᴋs ʀᴇᴍᴏᴠᴇᴅ")
+
 # ================== CALLBACK ==================
 @app.on_callback_query()
-async def callbacks(_, query):
-    data = query.data
+async def callbacks(client, query):
+    user_id = query.from_user.id
     chat_id = query.message.chat.id
 
-    if data.startswith("page_"):
+    if not await is_admin(client, chat_id, user_id):
+        return await query.answer("❌ ᴀᴅᴍɪɴ ᴏɴʟʏ", show_alert=True)
+
+    data = query.data
+
+    if data == "unlock_all":
+        unlock_all(chat_id)
+        await query.message.edit_text(
+            "✅ ᴀʟʟ ʟᴏᴄᴋs ʀᴇᴍᴏᴠᴇᴅ",
+            reply_markup=build_panel(chat_id, 0)
+        )
+
+    elif data.startswith("page_"):
         page = int(data.split("_")[1])
         await query.message.edit_text(
             main_text(),
@@ -153,10 +190,17 @@ async def callbacks(_, query):
 
     await query.answer()
 
-# ================== ENFORCER ==================
+# ================== ENFORCER (DELETE ONLY) ==================
 @app.on_message(filters.group)
-async def enforce(_, message):
+async def enforce(client, message):
     locks = get_locks(message.chat.id)
+
+    try:
+        member = await message.chat.get_member(message.from_user.id)
+        if member.status in ["administrator", "creator"]:
+            return
+    except:
+        pass
 
     try:
         if "photo" in locks and message.photo:
