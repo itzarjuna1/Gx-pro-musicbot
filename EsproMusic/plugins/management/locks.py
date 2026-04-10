@@ -1,8 +1,8 @@
-# ================== ULTRA LOCK SYSTEM FINAL ==================
+# ================== LOCK SYSTEM (FINAL STABLE) ==================
 
 import re
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from pyrogram.enums import ChatMemberStatus
 from pymongo import MongoClient
 
@@ -30,6 +30,20 @@ LOCKS = {
 }
 
 LOCK_LIST = list(LOCKS.keys())
+
+# ================== ADMIN ==================
+async def is_admin(client, message: Message):
+    try:
+        member = await client.get_chat_member(
+            message.chat.id,
+            message.from_user.id
+        )
+        return member.status in (
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.OWNER
+        )
+    except:
+        return False
 
 # ================== DB ==================
 def get_locks(chat_id):
@@ -97,7 +111,6 @@ def build_panel(chat_id, page=0):
 def main_text():
     return (
         "╭─〔 🔐 ʟᴏᴄᴋ ᴘᴀɴᴇʟ 〕─╮\n"
-        "│ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴄᴏɴᴛʀᴏʟ\n"
         "│ ᴛᴀᴘ ᴀ ʟᴏᴄᴋ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ\n"
         "╰────────────────╯"
     )
@@ -111,33 +124,38 @@ def detail_text(lock, enabled):
         f"╰────────────────╯"
     )
 
-# ================== COMMAND (LOCK PANEL) ==================
-@app.on_message(filters.command(["lock", "locktypes"]) & filters.group & filters.chat_admins)
-async def lock_panel(_, message):
-    await message.reply_text(
+# ================== COMMAND ==================
+@app.on_message(filters.command(["lock", "locktypes"]) & filters.group)
+async def lock_panel(client, message: Message):
+    if not await is_admin(client, message):
+        return await message.reply("admins only")
+
+    await message.reply(
         main_text(),
         reply_markup=build_panel(message.chat.id, 0)
     )
 
 # ================== UNLOCK ALL ==================
-@app.on_message(filters.command("unlockall") & filters.group & filters.chat_admins)
-async def unlockall_cmd(_, message):
+@app.on_message(filters.command("unlockall") & filters.group)
+async def unlockall_cmd(client, message: Message):
+    if not await is_admin(client, message):
+        return await message.reply("admins only")
+
     unlock_all(message.chat.id)
-    await message.reply_text("✅ ᴀʟʟ ʟᴏᴄᴋs ʀᴇᴍᴏᴠᴇᴅ")
+    await message.reply("all locks removed")
 
 # ================== CALLBACK ==================
 @app.on_callback_query()
 async def callbacks(client, query):
-    member = await client.get_chat_member(
-        query.message.chat.id,
-        query.from_user.id
+    fake_msg = Message(
+        id=0,
+        date=None,
+        chat=query.message.chat,
+        from_user=query.from_user
     )
 
-    if member.status not in (
-        ChatMemberStatus.ADMINISTRATOR,
-        ChatMemberStatus.OWNER
-    ):
-        return await query.answer("❌ ᴀᴅᴍɪɴ ᴏɴʟʏ", show_alert=True)
+    if not await is_admin(client, fake_msg):
+        return await query.answer("admins only", show_alert=True)
 
     data = query.data
     chat_id = query.message.chat.id
@@ -145,7 +163,7 @@ async def callbacks(client, query):
     if data == "unlock_all":
         unlock_all(chat_id)
         await query.message.edit_text(
-            "✅ ᴀʟʟ ʟᴏᴄᴋs ʀᴇᴍᴏᴠᴇᴅ",
+            "all locks removed",
             reply_markup=build_panel(chat_id, 0)
         )
 
@@ -163,8 +181,8 @@ async def callbacks(client, query):
         await query.message.edit_text(
             detail_text(lock, lock in locks),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔁 ᴛᴏɢɢʟᴇ", callback_data=f"toggle_{lock}_{page}")],
-                [InlineKeyboardButton("⬅️ ʙᴀᴄᴋ", callback_data=f"page_{page}")]
+                [InlineKeyboardButton("toggle", callback_data=f"toggle_{lock}_{page}")],
+                [InlineKeyboardButton("back", callback_data=f"page_{page}")]
             ])
         )
 
@@ -175,8 +193,8 @@ async def callbacks(client, query):
         await query.message.edit_text(
             detail_text(lock, status),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔁 ᴛᴏɢɢʟᴇ", callback_data=f"toggle_{lock}_{page}")],
-                [InlineKeyboardButton("⬅️ ʙᴀᴄᴋ", callback_data=f"page_{page}")]
+                [InlineKeyboardButton("toggle", callback_data=f"toggle_{lock}_{page}")],
+                [InlineKeyboardButton("back", callback_data=f"page_{page}")]
             ])
         )
 
@@ -184,15 +202,11 @@ async def callbacks(client, query):
 
 # ================== ENFORCER ==================
 @app.on_message(filters.group)
-async def enforce(client, message):
+async def enforce(client, message: Message):
     locks = get_locks(message.chat.id)
 
-    try:
-        member = await message.chat.get_member(message.from_user.id)
-        if member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
-            return
-    except:
-        pass
+    if await is_admin(client, message):
+        return
 
     try:
         if "photo" in locks and message.photo:
