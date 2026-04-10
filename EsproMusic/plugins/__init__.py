@@ -3,7 +3,7 @@ from os.path import dirname, isfile
 
 # ================== PRIORITY ==================
 PRIORITY_MODULES = [
-    "EsproMusic.plugins.play",     # 🎵 music first
+    "EsproMusic.plugins.play.play",     # 🎵 music first
     "EsproMusic.plugins.bot",
 ]
 
