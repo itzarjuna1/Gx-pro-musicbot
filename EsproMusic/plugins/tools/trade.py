@@ -15,7 +15,7 @@ from EsproMusic import Loy
 pending_trades = {}
 
 
-@ROY.on_message(filters.command("trade"))
+@Loy.on_message(filters.command("trade"))
 async def trade(client, message):
     sender_id = message.from_user.id
 
@@ -74,7 +74,7 @@ async def trade(client, message):
     await message.reply_text(f"❖ {message.reply_to_message.from_user.mention}, ᴅᴏ ʏᴏᴜ ᴀᴄᴄᴇᴘᴛ ᴛʜɪs ᴛʀᴀᴅᴇ ?", reply_markup=keyboard)
 
 
-@ROY.on_callback_query(filters.create(lambda _, __, query: query.data in ["confirm_trade", "cancel_trade"]))
+@Loy.on_callback_query(filters.create(lambda _, __, query: query.data in ["confirm_trade", "cancel_trade"]))
 async def on_callback_query(client, callback_query):
     receiver_id = callback_query.from_user.id
 
@@ -127,7 +127,7 @@ async def on_callback_query(client, callback_query):
 pending_gifts = {}
 
 
-@ROY.on_message(filters.command("gift"))
+@Loy.on_message(filters.command("gift"))
 async def gift(client, message):
     sender_id = message.from_user.id
 
@@ -174,7 +174,7 @@ async def gift(client, message):
 
     await message.reply_text(f"❖ ᴅᴏ ʏᴏᴜ ʀᴇᴀʟʟʏ ᴡᴀɴɴᴀ ᴛᴏ ɢɪғᴛ ➥ {message.reply_to_message.from_user.mention}?", reply_markup=keyboard)
 
-@ROY.on_callback_query(filters.create(lambda _, __, query: query.data in ["confirm_gift", "cancel_gift"]))
+@Loy.on_callback_query(filters.create(lambda _, __, query: query.data in ["confirm_gift", "cancel_gift"]))
 async def on_callback_query(client, callback_query):
     sender_id = callback_query.from_user.id
 
