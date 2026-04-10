@@ -282,26 +282,46 @@ class YouTubeAPI:
 
     
 
+    
     async def track(self, link: str, videoid: Union[bool, str] = None):
-        if videoid:
-            link = self.base + link
-        if "&" in link:
-            link = link.split("&")[0]
+    if videoid:
+        link = self.base + link
+    if "&" in link:
+        link = link.split("&")[0]
+
+    try:
         results = VideosSearch(link, limit=1)
-        for result in (await results.next())["result"]:
-            title = result["title"]
-            duration_min = result["duration"]
-            vidid = result["id"]
-            yturl = result["link"]
-            thumbnail = result["thumbnails"][0]["url"].split("?")[0]
-        track_details = {
-            "title": title,
-            "link": yturl,
-            "vidid": vidid,
-            "duration_min": duration_min,
-            "thumb": thumbnail,
-        }
-        return track_details, vidid
+        data = (await results.next())["result"]
+
+        if not data:
+            raise Exception("YT failed")
+
+        result = data[0]
+
+        return {
+            "title": result["title"],
+            "link": result["link"],
+            "vidid": result["id"],
+            "duration_min": result["duration"],
+            "thumb": result["thumbnails"][0]["url"].split("?")[0],
+            "source": "youtube",
+        }, result["id"]
+
+    except Exception:
+        # 🔥 JioSaavn fallback
+        js = await jiosaavn_search(link)
+        if not js:
+            return None, None
+
+        return {
+            "title": js["title"],
+            "link": js["url"],
+            "vidid": "saavn",
+            "duration_min": js["duration"],
+            "thumb": js["thumb"],
+            "source": "jiosaavn",
+        }, "saavn"
+        
 
     async def formats(self, link: str, videoid: Union[bool, str] = None):
         if videoid:
@@ -369,7 +389,10 @@ class YouTubeAPI:
             
             if downloaded_file:
                 return downloaded_file, True
-            else:
+            js = await jiosaavn_search(link)
+            if not js:
                 return None, False
+
+return js["url"], True
         except Exception:
             return None, False
