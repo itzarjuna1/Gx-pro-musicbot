@@ -97,6 +97,10 @@ async def play_commnd(
             }
 
             try:
+                if isinstance(details, dict) and 
+            details.get("source") == "jiosaavn":
+                    details["path"] = details["link"]
+                
                 await stream(
                     _,
                     mystic,
@@ -675,13 +679,3 @@ async def slider_queries(client, CallbackQuery, _):
         )
 
 
-# ©️ Copyright Reserved - @NoxxOP  Nand Yaduwanshi
-
-# ===========================================
-# ©️ 2025 Nand Yaduwanshi (aka @NoxxOP)
-# 🔗 GitHub : https://github.com/NoxxOP/ShrutiMusic
-# 📢 Telegram Channel : https://t.me/ShrutiBots
-# ===========================================
-
-
-# ❤️ Love From ShrutiBots 
