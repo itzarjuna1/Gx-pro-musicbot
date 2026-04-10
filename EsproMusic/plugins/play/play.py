@@ -174,6 +174,10 @@ async def play_commnd(
                     )
                 except:
                     return await mystic.edit_text(_["play_3"])
+                if isinstance(details, dict) and details.get("source") 
+                == "jiosaavn":
+                    details["path"] = details["link"]
+    
                 streamtype = "playlist"
                 plist_type = "yt"
                 if "&" in url:
