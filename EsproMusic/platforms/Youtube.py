@@ -393,6 +393,6 @@ class YouTubeAPI:
             if not js:
                 return None, False
 
-return js["url"], True
+            return js["url"], True
         except Exception:
             return None, False
