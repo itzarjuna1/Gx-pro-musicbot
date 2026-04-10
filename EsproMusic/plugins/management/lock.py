@@ -1,30 +1,20 @@
-# ================== LOCK SYSTEM (FINAL STABLE) ==================
+# ================== LOCK SYSTEM (ULTRA FINAL) ==================
 
 import re
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
-from pyrogram.enums import ChatMemberStatus
+from pyrogram.enums import ChatMemberStatus, ButtonStyle
 from pymongo import MongoClient
-from pyrogram.enums import ButtonStyle  # KEPT AS YOU SAID
 
 from EsproMusic import app
 from config import MONGO_DB_URI
-
-# ================== PATCH (IMPORTANT) ==================
-# Pyrogram doesn't support ButtonStyle → patch to avoid crash
-try:
-    ButtonStyle.PRIMARY
-except:
-    class ButtonStyle:
-        PRIMARY = None
-        SUCCESS = None
 
 # ================== MONGO ==================
 mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 locks_db = db["locks"]
 
-PAGE_SIZE = 9
+PAGE_SIZE = 6  # 2 per row = 3 rows
 
 # ================== LOCK DATA ==================
 LOCKS = {
@@ -42,9 +32,12 @@ LOCKS = {
 LOCK_LIST = list(LOCKS.keys())
 
 # ================== ADMIN ==================
-async def is_admin(client, chat_id, user_id):
+async def is_admin(client, message: Message):
     try:
-        member = await client.get_chat_member(chat_id, user_id)
+        member = await client.get_chat_member(
+            message.chat.id,
+            message.from_user.id
+        )
         return member.status in (
             ChatMemberStatus.ADMINISTRATOR,
             ChatMemberStatus.OWNER
@@ -76,7 +69,8 @@ def unlock_all(chat_id):
 
 # ================== UI ==================
 def format_status(lock, enabled):
-    return f"🟢 {lock}" if enabled else f"🔴 {lock}"
+    name = lock.replace("_", " ")
+    return f"🟢 {name}" if enabled else f"🔴 {name}"
 
 def build_panel(chat_id, page=0):
     locks = get_locks(chat_id)
@@ -85,7 +79,8 @@ def build_panel(chat_id, page=0):
     end = start + PAGE_SIZE
     items = LOCK_LIST[start:end]
 
-    buttons, row = [], []
+    buttons = []
+    row = []
 
     for i, lock in enumerate(items, 1):
         row.append(
@@ -95,7 +90,7 @@ def build_panel(chat_id, page=0):
                 style=ButtonStyle.PRIMARY
             )
         )
-        if i % 3 == 0:
+        if i % 2 == 0:
             buttons.append(row)
             row = []
 
@@ -104,19 +99,19 @@ def build_panel(chat_id, page=0):
 
     nav = []
     if page > 0:
-        nav.append(InlineKeyboardButton("⏮ ʙᴀᴄᴋ", callback_data=f"page_{page-1}"))
+        nav.append(
+            InlineKeyboardButton("⏮ ʙᴀᴄᴋ", callback_data=f"page_{page-1}", style=ButtonStyle.SECONDARY)
+        )
     if end < len(LOCK_LIST):
-        nav.append(InlineKeyboardButton("ɴᴇxᴛ ⏭", callback_data=f"page_{page+1}"))
+        nav.append(
+            InlineKeyboardButton("ɴᴇxᴛ ⏭", callback_data=f"page_{page+1}", style=ButtonStyle.SECONDARY)
+        )
 
     if nav:
         buttons.append(nav)
 
     buttons.append([
-        InlineKeyboardButton(
-            "🚫 ᴜɴʟᴏᴄᴋ ᴀʟʟ",
-            callback_data="unlock_all",
-            style=ButtonStyle.SUCCESS
-        )
+        InlineKeyboardButton("🚫 ᴜɴʟᴏᴄᴋ ᴀʟʟ", callback_data="unlock_all", style=ButtonStyle.SUCCESS)
     ])
 
     return InlineKeyboardMarkup(buttons)
@@ -141,8 +136,8 @@ def detail_text(lock, enabled):
 # ================== COMMAND ==================
 @app.on_message(filters.command(["lock", "locktypes"]) & filters.group)
 async def lock_panel(client, message: Message):
-    if not await is_admin(client, message.chat.id, message.from_user.id):
-        return await message.reply("admins only")
+    if not await is_admin(client, message):
+        return await message.reply("ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
     await message.reply(
         main_text(),
@@ -152,27 +147,32 @@ async def lock_panel(client, message: Message):
 # ================== UNLOCK ALL ==================
 @app.on_message(filters.command("unlockall") & filters.group)
 async def unlockall_cmd(client, message: Message):
-    if not await is_admin(client, message.chat.id, message.from_user.id):
-        return await message.reply("admins only")
+    if not await is_admin(client, message):
+        return await message.reply("ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
     unlock_all(message.chat.id)
-    await message.reply("ᴀʟʟ ʀᴇsᴛʀɪᴄᴛɪᴏɴs ʀᴇᴍᴏᴠᴇᴅ .. ᴜsᴇʀs ᴀʀᴇ ғʀᴇᴇ ʀᴏɢᴇʀ🌷")
+    await message.reply("🌸 ᴀʟʟ ʟᴏᴄᴋs ʀᴇᴍᴏᴠᴇᴅ ~ ғʀᴇᴇ ᴄʜᴀᴛ 🌸")
 
 # ================== CALLBACK ==================
 @app.on_callback_query()
 async def callbacks(client, query):
-    chat_id = query.message.chat.id
-    user_id = query.from_user.id
+    fake_msg = Message(
+        id=0,
+        date=None,
+        chat=query.message.chat,
+        from_user=query.from_user
+    )
 
-    if not await is_admin(client, chat_id, user_id):
-        return await query.answer("admins only", show_alert=True)
+    if not await is_admin(client, fake_msg):
+        return await query.answer("ᴀᴅᴍɪɴs ᴏɴʟʏ", show_alert=True)
 
     data = query.data
+    chat_id = query.message.chat.id
 
     if data == "unlock_all":
         unlock_all(chat_id)
         await query.message.edit_text(
-            "all locks removed",
+            "🌸 ᴀʟʟ ʟᴏᴄᴋs ʀᴇᴍᴏᴠᴇᴅ",
             reply_markup=build_panel(chat_id, 0)
         )
 
@@ -192,14 +192,16 @@ async def callbacks(client, query):
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
-                        "ᴛᴏɢɢʟᴇ ᴏɴ|ᴏғғ",
+                        "🔁 ᴛᴏɢɢʟᴇ",
                         callback_data=f"toggle_{lock}_{page}",
                         style=ButtonStyle.PRIMARY
-                    ),
+                    )
+                ],
+                [
                     InlineKeyboardButton(
                         "💗 ʙᴀᴄᴋ",
                         callback_data=f"page_{page}",
-                        style=ButtonStyle.SUCCESS
+                        style=ButtonStyle.SECONDARY
                     )
                 ]
             ])
@@ -214,7 +216,7 @@ async def callbacks(client, query):
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
-                        "ᴛᴏɢɢʟᴇ ᴏɴ|ᴏғғ",
+                        "🔁 ᴛᴏɢɢʟᴇ",
                         callback_data=f"toggle_{lock}_{page}",
                         style=ButtonStyle.PRIMARY
                     )
@@ -223,7 +225,7 @@ async def callbacks(client, query):
                     InlineKeyboardButton(
                         "💗 ʙᴀᴄᴋ",
                         callback_data=f"page_{page}",
-                        style=ButtonStyle.SUCCESS
+                        style=ButtonStyle.SECONDARY
                     )
                 ]
             ])
@@ -232,11 +234,15 @@ async def callbacks(client, query):
     await query.answer()
 
 # ================== ENFORCER ==================
-@app.on_message(filters.group)
+@app.on_message(filters.group, group=1)
 async def enforce(client, message: Message):
+    # ❌ DO NOT TOUCH COMMANDS
+    if message.text and message.text.startswith("/"):
+        return
+
     locks = get_locks(message.chat.id)
 
-    if await is_admin(client, message.chat.id, message.from_user.id):
+    if await is_admin(client, message):
         return
 
     try:
