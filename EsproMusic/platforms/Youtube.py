@@ -13,7 +13,34 @@ from EsproMusic import LOGGER
 
 YOUR_API_URL = None
 FALLBACK_API_URL = "https://vercel.com/txkuzes-projects/admin-music-hub"
+JIOSAAVN_API = "YOUR_JIOSAAVN_API_URL"
 
+async def jiosaavn_search(query: str):
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{JIOSAAVN_API}/search",
+                params={"query": query},
+                timeout=aiohttp.ClientTimeout(total=10),
+            ) as resp:
+                if resp.status != 200:
+                    return None
+                
+                data = await resp.json()
+                if not data or "results" not in data:
+                    return None
+                
+                song = data["results"][0]
+                
+                return {
+                    "title": song.get("title"),
+                    "url": song.get("media_url"),
+                    "thumb": song.get("image"),
+                    "duration": song.get("duration"),
+                }
+    except Exception:
+        return None
+        
 async def load_api_url():
     global YOUR_API_URL
     logger = LOGGER("EsproMusic.platforms.Youtube.py")
