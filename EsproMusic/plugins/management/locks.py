@@ -1,20 +1,22 @@
-# ================== ULTRA AESTHETIC LOCK SYSTEM (PYROGRAM) ==================
+# ================== ULTRA LOCK SYSTEM (ESPRO MUSIC COMPATIBLE) ==================
 
 import re
-from pyrogram import Client, filters
+from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pymongo import MongoClient
 
-# ========= CONFIG =========
+from EsproMusic import app
+from EsproMusic.utils.filters import command
 from config import MONGO_DB_URI
 
+# ================== MONGO ==================
 mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 locks_db = db["locks"]
 
 PAGE_SIZE = 9
 
-# ========= LOCK DATA =========
+# ================== LOCK DATA ==================
 LOCKS = {
     "photo": "ʙʟᴏᴄᴋs ᴀʟʟ ᴘʜᴏᴛᴏs",
     "video": "ʙʟᴏᴄᴋs ᴀʟʟ ᴠɪᴅᴇᴏs",
@@ -29,7 +31,7 @@ LOCKS = {
 
 LOCK_LIST = list(LOCKS.keys())
 
-# ========= DB =========
+# ================== DB ==================
 def get_locks(chat_id):
     data = locks_db.find_one({"chat_id": chat_id})
     return data["locks"] if data else []
@@ -48,7 +50,7 @@ def toggle_lock(chat_id, lock):
         )
         return True
 
-# ========= UI =========
+# ================== UI ==================
 def format_status(lock, enabled):
     return f"🟢 {lock}" if enabled else f"🔴 {lock}"
 
@@ -87,10 +89,10 @@ def build_panel(chat_id, page=0):
 
     return InlineKeyboardMarkup(buttons)
 
-# ========= TEXT =========
+# ================== TEXT ==================
 def main_text():
     return (
-        "╭─〔 🔐 ʟᴏᴄᴋ ᴄᴏɴᴛʀᴏʟ 〕─╮\n"
+        "╭─〔 🔐 ʟᴏᴄᴋ ᴘᴀɴᴇʟ 〕─╮\n"
         "│ ᴛᴀᴘ ᴀ ʟᴏᴄᴋ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ\n"
         "╰────────────────╯"
     )
@@ -104,17 +106,17 @@ def detail_text(lock, enabled):
         f"╰────────────────╯"
     )
 
-# ========= COMMAND =========
-@Client.on_message(filters.command("locktypes") & filters.group)
-async def locktypes(client, message):
+# ================== COMMAND ==================
+@app.on_message(command(["locktypes", "locks"]) & filters.group)
+async def locktypes(_, message):
     await message.reply_text(
         main_text(),
         reply_markup=build_panel(message.chat.id, 0)
     )
 
-# ========= CALLBACK =========
-@Client.on_callback_query()
-async def callbacks(client, query):
+# ================== CALLBACK ==================
+@app.on_callback_query()
+async def callbacks(_, query):
     data = query.data
     chat_id = query.message.chat.id
 
@@ -151,9 +153,9 @@ async def callbacks(client, query):
 
     await query.answer()
 
-# ========= ENFORCER =========
-@Client.on_message(filters.group)
-async def enforce(client, message):
+# ================== ENFORCER ==================
+@app.on_message(filters.group)
+async def enforce(_, message):
     locks = get_locks(message.chat.id)
 
     try:
