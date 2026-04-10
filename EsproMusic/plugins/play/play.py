@@ -97,8 +97,7 @@ async def play_commnd(
             }
 
             try:
-                if isinstance(details, dict) and 
-            details.get("source") == "jiosaavn":
+                if isinstance(details, dict) and details.get("source") == "jiosaavn":
                     details["path"] = details["link"]
                 
                 await stream(
