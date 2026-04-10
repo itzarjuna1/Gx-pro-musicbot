@@ -185,7 +185,7 @@ async def callbacks(client, query):
                 [
                     InlineKeyboardButton("ᴛᴏɢɢʟᴇ ᴏɴ|ᴏғғ", callback_data=f"toggle_{lock}_{page}", style=ButtonStyle.SUCCESS),
                     InlineKeyboardButton("💗ʙᴀᴄᴋ", callback_data=f"page_{page}")
-                ],
+                ]
         ]) 
         
  
