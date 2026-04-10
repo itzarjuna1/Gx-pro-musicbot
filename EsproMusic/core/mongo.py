@@ -16,7 +16,7 @@ try:
     groups = mongodb.groups              # group settings (nsfw, locks, etc.)
     nsfw_cache = mongodb.nsfw            # scan cache (avoid repeated API calls)
     nsfw_storage = mongodb.nsfw_storage  # optional: flagged media storage/logs
-
+    log_db = mongodb.log_channel
     LOGGER(__name__).info("💮 mongodb connected successfully.")
 
 except Exception as e:
