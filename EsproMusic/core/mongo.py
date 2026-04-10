@@ -3,21 +3,26 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from config import MONGO_DB_URI
 from ..logging import LOGGER
 
-LOGGER(__name__).info("connecting to your mongo database...")
+LOGGER(__name__).info("💮 connecting to mongodb...")
 
 try:
     _mongo_async_ = AsyncIOMotorClient(MONGO_DB_URI)
 
-    # main database
-    mongodb = _mongo_async_.Anon
+    # ================= DATABASE =================
+    # you can change DB name in config later if needed
+    mongodb = _mongo_async_.EsproMusic
 
-    # ================= collections =================
-    groups = mongodb.groups          # nsfw toggle per chat
-    NSFW = mongodb.nsfw              # scan cache
-    NSFW_STORAGE = mongodb.nsfw_storage  # optional storage/logging
+    # ================= COLLECTIONS =================
+    groups = mongodb.groups              # group settings (nsfw, locks, etc.)
+    nsfw_cache = mongodb.nsfw            # scan cache (avoid repeated API calls)
+    nsfw_storage = mongodb.nsfw_storage  # optional: flagged media storage/logs
 
-    LOGGER(__name__).info("connected to your mongo database.")
+    LOGGER(__name__).info("💮 mongodb connected successfully.")
 
 except Exception as e:
-    LOGGER(__name__).error(f"failed to connect to your mongo database: {e}")
-    exit()
+    LOGGER(__name__).error(f"💮 mongodb connection failed: {e}")
+    _mongo_async_ = None
+    mongodb = None
+    groups = None
+    nsfw_cache = None
+    nsfw_storage = None
