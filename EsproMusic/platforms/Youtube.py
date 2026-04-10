@@ -13,7 +13,7 @@ from EsproMusic import LOGGER
 
 YOUR_API_URL = None
 FALLBACK_API_URL = "https://vercel.com/txkuzes-projects/admin-music-hub"
-JIOSAAVN_API = "YOUR_JIOSAAVN_API_URL"
+JIOSAAVN_API = "http://127.0.0.1:3000"
 
 async def jiosaavn_search(query: str):
     try:
