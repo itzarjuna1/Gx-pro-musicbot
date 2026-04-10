@@ -1,8 +1,9 @@
-# ================== ULTRA LOCK SYSTEM (FINAL PRO VERSION) ==================
+# ================== ULTRA LOCK SYSTEM FINAL ==================
 
 import re
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.enums import ChatMemberStatus
 from pymongo import MongoClient
 
 from EsproMusic import app
@@ -29,14 +30,6 @@ LOCKS = {
 }
 
 LOCK_LIST = list(LOCKS.keys())
-
-# ================== ADMIN CHECK ==================
-async def is_admin(client, chat_id, user_id):
-    try:
-        member = await client.get_chat_member(chat_id, user_id)
-        return member.status in ["administrator", "creator"]
-    except:
-        return False
 
 # ================== DB ==================
 def get_locks(chat_id):
@@ -96,7 +89,6 @@ def build_panel(chat_id, page=0):
     if nav:
         buttons.append(nav)
 
-    # unlock all button
     buttons.append([InlineKeyboardButton("🚫 ᴜɴʟᴏᴄᴋ ᴀʟʟ", callback_data="unlock_all")])
 
     return InlineKeyboardMarkup(buttons)
@@ -119,36 +111,36 @@ def detail_text(lock, enabled):
         f"╰────────────────╯"
     )
 
-# ================== COMMAND ==================
-@app.on_message(filters.command("locktypes") & filters.group)
-async def locktypes(client, message):
-    if not await is_admin(client, message.chat.id, message.from_user.id):
-        return await message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜsᴇ ᴛʜɪs")
-
+# ================== COMMAND (LOCK PANEL) ==================
+@app.on_message(filters.command(["lock", "locktypes"]) & filters.group & filters.chat_admins)
+async def lock_panel(_, message):
     await message.reply_text(
         main_text(),
         reply_markup=build_panel(message.chat.id, 0)
     )
 
 # ================== UNLOCK ALL ==================
-@app.on_message(filters.command("unlockall") & filters.group)
-async def unlockall_cmd(client, message):
-    if not await is_admin(client, message.chat.id, message.from_user.id):
-        return await message.reply_text("❌ ᴀᴅᴍɪɴ ᴏɴʟʏ")
-
+@app.on_message(filters.command("unlockall") & filters.group & filters.chat_admins)
+async def unlockall_cmd(_, message):
     unlock_all(message.chat.id)
     await message.reply_text("✅ ᴀʟʟ ʟᴏᴄᴋs ʀᴇᴍᴏᴠᴇᴅ")
 
 # ================== CALLBACK ==================
 @app.on_callback_query()
 async def callbacks(client, query):
-    user_id = query.from_user.id
-    chat_id = query.message.chat.id
+    member = await client.get_chat_member(
+        query.message.chat.id,
+        query.from_user.id
+    )
 
-    if not await is_admin(client, chat_id, user_id):
+    if member.status not in (
+        ChatMemberStatus.ADMINISTRATOR,
+        ChatMemberStatus.OWNER
+    ):
         return await query.answer("❌ ᴀᴅᴍɪɴ ᴏɴʟʏ", show_alert=True)
 
     data = query.data
+    chat_id = query.message.chat.id
 
     if data == "unlock_all":
         unlock_all(chat_id)
@@ -190,14 +182,14 @@ async def callbacks(client, query):
 
     await query.answer()
 
-# ================== ENFORCER (DELETE ONLY) ==================
+# ================== ENFORCER ==================
 @app.on_message(filters.group)
 async def enforce(client, message):
     locks = get_locks(message.chat.id)
 
     try:
         member = await message.chat.get_member(message.from_user.id)
-        if member.status in ["administrator", "creator"]:
+        if member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
             return
     except:
         pass
