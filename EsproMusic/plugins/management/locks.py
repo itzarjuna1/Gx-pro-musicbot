@@ -183,10 +183,18 @@ async def callbacks(client, query):
             detail_text(lock, lock in locks),
             reply_markup=InlineKeyboardMarkup([
                 [
-                    InlineKeyboardButton("ᴛᴏɢɢʟᴇ ᴏɴ|ᴏғғ", callback_data=f"toggle_{lock}_{page}", style=ButtonStyle.SUCCESS),
-                    InlineKeyboardButton("💗ʙᴀᴄᴋ", callback_data=f"page_{page}")
+                    InlineKeyboardButton(
+                        "ᴛᴏɢɢʟᴇ ᴏɴ|ᴏғғ",
+                        callback_data=f"toggle_{lock}_{page}",
+                        style=ButtonStyle.PRIMARY
+                    ),
+                    InlineKeyboardButton(
+                        "💗 ʙᴀᴄᴋ",
+                        callback_data=f"page_{page}",
+                        style=ButtonStyle.SECCUSS
+                    )
                 ]
-        ]) 
+          ])
         
  
     elif data.startswith("toggle_"):
