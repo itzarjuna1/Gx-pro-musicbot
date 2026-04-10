@@ -284,44 +284,44 @@ class YouTubeAPI:
 
     
     async def track(self, link: str, videoid: Union[bool, str] = None):
-    if videoid:
-        link = self.base + link
-    if "&" in link:
-        link = link.split("&")[0]
+            if videoid:
+                link = self.base + link
+            if "&" in link:
+                link = link.split("&")[0]
 
-    try:
-        results = VideosSearch(link, limit=1)
-        data = (await results.next())["result"]
+            try:
+                results = VideosSearch(link, limit=1)
+                data = (await results.next())["result"]
 
-        if not data:
-            raise Exception("YT failed")
+                if not data:
+                    raise Exception("YT failed")
 
-        result = data[0]
+                result = data[0]
 
-        return {
-            "title": result["title"],
-            "link": result["link"],
-            "vidid": result["id"],
-            "duration_min": result["duration"],
-            "thumb": result["thumbnails"][0]["url"].split("?")[0],
-            "source": "youtube",
-        }, result["id"]
+                return {
+                    "title": result["title"],
+                    "link": result["link"],
+                    "vidid": result["id"],
+                    "duration_min": result["duration"],
+                    "thumb": result["thumbnails"][0]["url"].split("?")[0],
+                    "source": "youtube",
+                }, result["id"]
 
-    except Exception:
+            except Exception:
         # 🔥 JioSaavn fallback
-        js = await jiosaavn_search(link)
-        if not js:
-            return None, None
+                js = await jiosaavn_search(link)
+                if not js:
+                    return None, None
 
-        return {
-            "title": js["title"],
-            "link": js["url"],
-            "vidid": "saavn",
-            "duration_min": js["duration"],
-            "thumb": js["thumb"],
-            "source": "jiosaavn",
-        }, "saavn"
-        
+                return {
+                    "title": js["title"],
+                    "link": js["url"],
+                    "vidid": "saavn",
+                    "duration_min": js["duration"],
+                    "thumb": js["thumb"],
+                    "source": "jiosaavn",
+                }, "saavn"
+          
 
     async def formats(self, link: str, videoid: Union[bool, str] = None):
         if videoid:
