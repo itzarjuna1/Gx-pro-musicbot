@@ -1,7 +1,7 @@
 from typing import Union
 
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from pyrogram.enums import ButtonStyle
+
 from EsproMusic import app
 
 
@@ -90,7 +90,6 @@ def help_pannel(_, START: Union[bool, int] = None):
                 InlineKeyboardButton(
                     text=_["H_B_16"],
                     callback_data="help_callback hb16",
-                    style=ButtonStyle.PRIMARY,
                 ),
             ],
             mark,
