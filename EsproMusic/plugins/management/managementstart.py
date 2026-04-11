@@ -2,44 +2,21 @@
 
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
-from pyrogram.enums import ParseMode, ButtonStyle
-
+from pyrogram.enums import ButtonStyle
 from EsproMusic import app
+from EsproMusic.utils.language import get_string
 
 # ===== LINKS =====
 SUPPORT_GROUP = "https://t.me/theinfinity_support"
 SUPPORT_CHANNEL = "https://t.me/theinfinitynetwork"
-
-# ================== TEXT ==================
-def mstart_text():
-    return (
-        "╭─〔 ⚙️ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ ᴍᴏᴅᴇ 〕─╮\n"
-        "│\n"
-        "│ ✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴀᴅᴠᴀɴᴄᴇᴅ ᴄʜᴀᴛ ᴄᴏɴᴛʀᴏʟ\n"
-        "│\n"
-        "│ ᴛʜɪs ᴍᴏᴅᴇ ᴀʟʟᴏᴡs ʏᴏᴜ ᴛᴏ ғᴜʟʟʏ\n"
-        "│ ᴍᴀɴᴀɢᴇ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴡɪᴛʜ ᴘᴏᴡᴇʀғᴜʟ\n"
-        "│ ᴛᴏᴏʟs ᴀɴᴅ ᴀᴜᴛᴏᴍᴀᴛɪᴏɴ sʏsᴛᴇᴍs.\n"
-        "│\n"
-        "│ ✧ ʟᴏᴄᴋ & ᴍᴇᴅɪᴀ ᴄᴏɴᴛʀᴏʟs\n"
-        "│ ✧ ʙᴀɴ / ᴍᴜᴛᴇ / ᴀᴅᴍɪɴ ᴛᴏᴏʟs\n"
-        "│ ✧ ғɪʟᴛᴇʀs & ᴀᴜᴛᴏ ʀᴇᴘʟɪᴇs\n"
-        "│ ✧ ᴀɴᴛɪ sᴘᴀᴍ & sᴇᴄᴜʀɪᴛʏ\n"
-        "│ ✧ ɪᴍᴘᴏʀᴛ / ᴇxᴘᴏʀᴛ sᴇᴛᴛɪɴɢs\n"
-        "│\n"
-        "│ ⚡ ᴇᴠᴇʀʏᴛʜɪɴɢ ɪɴ ᴏɴᴇ ᴘʟᴀᴄᴇ\n"
-        '│ <a href="https://files.catbox.moe/2y26pq.mp4">ғᴏʀ sᴍᴀʀᴛ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ</a>\n'
-        "│\n"
-        "╰────────────────╯"
-    )
 
 # ================== BUTTONS ==================
 def mstart_buttons():
     return InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("💬 sᴜᴘᴘᴏʀᴛ", url=SUPPORT_GROUP, style=ButtonStyle.PRIMARY),
-                InlineKeyboardButton("📢 ᴄʜᴀɴɴᴇʟ", url=SUPPORT_CHANNEL, style=ButtonStyle.SUCCESS)
+                InlineKeyboardButton("💬 sᴜᴘᴘᴏʀᴛ", url=SUPPORT_GROUP, style=ButtonStyle.SUCCESS),
+                InlineKeyboardButton("📢 ᴄʜᴀɴɴᴇʟ", url=SUPPORT_CHANNEL, style=ButtonStyle.PRIMARY),
             ],
             [
                 InlineKeyboardButton("❌ ᴄʟᴏsᴇ", callback_data="close_mstart", style=ButtonStyle.DANGER)
@@ -50,10 +27,11 @@ def mstart_buttons():
 # ================== COMMAND ==================
 @app.on_message(filters.command("mstart") & filters.group)
 async def mstart(client, message: Message):
+    text = get_string(message.chat.id, "mstart_1")
+
     await message.reply(
-        mstart_text(),
-        reply_markup=mstart_buttons(),
-        parse_mode="html"   # IMPORTANT
+        text,
+        reply_markup=mstart_buttons()
     )
 
 # ================== CALLBACK ==================
