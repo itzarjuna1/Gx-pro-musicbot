@@ -5,7 +5,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from EsproMusic import app
 
-# ===== CHANGE THESE =====
+# ===== LINKS =====
 SUPPORT_GROUP = "https://t.me/theinfinity_support"
 SUPPORT_CHANNEL = "https://t.me/theinfinitynetwork"
 
@@ -27,7 +27,7 @@ def mstart_text():
         "│ ✧ ɪᴍᴘᴏʀᴛ / ᴇxᴘᴏʀᴛ sᴇᴛᴛɪɴɢs\n"
         "│\n"
         "│ ⚡ ᴇᴠᴇʀʏᴛʜɪɴɢ ɪɴ ᴏɴᴇ ᴘʟᴀᴄᴇ\n"
-        "│ <a "https://files.catbox.moe/2y26pq.mp4"> ғᴏʀ sᴍᴀʀᴛ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ. </a>\n"
+        '│ <a href="https://files.catbox.moe/2y26pq.mp4">ғᴏʀ sᴍᴀʀᴛ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ</a>\n'
         "│\n"
         "╰────────────────╯"
     )
@@ -51,7 +51,8 @@ def mstart_buttons():
 async def mstart(client, message: Message):
     await message.reply(
         mstart_text(),
-        reply_markup=mstart_buttons()
+        reply_markup=mstart_buttons(),
+        parse_mode="HTML"   # IMPORTANT
     )
 
 # ================== CALLBACK ==================
