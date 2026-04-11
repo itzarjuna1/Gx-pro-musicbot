@@ -1,5 +1,3 @@
-# ================== LOCK SYSTEM (ULTRA FINAL FIXED) ==================
-
 import re
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -9,17 +7,14 @@ from pymongo import MongoClient
 from EsproMusic import app
 from config import MONGO_DB_URI
 
-# ================== MONGO ==================
 mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 locks_db = db["locks"]
 
-# ================== CACHE ==================
 LOCK_CACHE = {}
 
 PAGE_SIZE = 6
 
-# ================== LOCK DATA ==================
 LOCKS = {
     "all": "ʟᴏᴄᴋ ᴇᴠᴇʀʏᴛʜɪɴɢ",
     "album": "ʙʟᴏᴄᴋ ᴀʟʙᴜᴍs",
@@ -70,7 +65,6 @@ LOCKS = {
 
 LOCK_LIST = list(LOCKS.keys())
 
-# ================== ADMIN ==================
 async def is_admin(client, chat_id, user_id):
     try:
         member = await client.get_chat_member(chat_id, user_id)
@@ -78,7 +72,6 @@ async def is_admin(client, chat_id, user_id):
     except:
         return False
 
-# ================== DB ==================
 def get_locks(chat_id):
     if chat_id in LOCK_CACHE:
         return LOCK_CACHE[chat_id]
@@ -116,11 +109,10 @@ def unlock_all(chat_id):
     LOCK_CACHE[chat_id] = []
     locks_db.delete_one({"chat_id": chat_id})
 
-# ================== STYLE ==================
 def style(i):
     return [ButtonStyle.PRIMARY, ButtonStyle.SUCCESS, ButtonStyle.DANGER][i % 3]
 
-# ================== UI ==================
+
 def build_panel(chat_id, page=0):
     locks = get_locks(chat_id)
     total_pages = (len(LOCK_LIST) - 1) // PAGE_SIZE
@@ -162,7 +154,6 @@ def build_panel(chat_id, page=0):
 
     return InlineKeyboardMarkup(buttons)
 
-# ================== COMMAND ==================
 @app.on_message(filters.command("lock") & filters.group)
 async def lock_panel(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
@@ -170,7 +161,6 @@ async def lock_panel(client, message: Message):
 
     await message.reply("🔐 ʟᴏᴄᴋ ᴘᴀɴᴇʟ", reply_markup=build_panel(message.chat.id))
 
-# ================== CALLBACK ==================
 @app.on_callback_query()
 async def cb(client, query):
     chat_id = query.message.chat.id
@@ -195,7 +185,6 @@ async def cb(client, query):
 
     await query.answer()
 
-# ================== ENFORCER ==================
 @app.on_message(filters.group, group=1)
 async def enforce(client, message: Message):
 
@@ -266,3 +255,6 @@ async def enforce(client, message: Message):
 
     except:
         pass
+
+#file written by @itzarjuna01 © some errors spotted were fixed via ai 
+#any marks of ai should be considered as ai fixes 
