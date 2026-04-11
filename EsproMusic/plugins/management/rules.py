@@ -1,8 +1,8 @@
-# ================== ROSE STYLE RULES SYSTEM (FINAL) ==================
+# ================== ROSE STYLE RULES SYSTEM (FINAL FIXED) ==================
 
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
-from pyrogram.enums import ChatMemberStatus, ButtonStyle
+from pyrogram.enums import ChatMemberStatus
 from pymongo import MongoClient
 
 from EsproMusic import app
@@ -12,6 +12,8 @@ from config import MONGO_DB_URI
 mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 rules_db = db["rules"]
+
+BOT_USERNAME = "waifuxmusicbot"
 
 # ================== ADMIN CHECK ==================
 async def is_admin(client, chat_id, user_id):
@@ -24,10 +26,9 @@ async def is_admin(client, chat_id, user_id):
     except:
         return False
 
-# ================== DB FUNCTIONS ==================
+# ================== DB ==================
 def get_data(chat_id):
-    data = rules_db.find_one({"chat_id": chat_id})
-    return data if data else {}
+    return rules_db.find_one({"chat_id": chat_id}) or {}
 
 def set_rules(chat_id, text):
     rules_db.update_one(
@@ -58,21 +59,15 @@ def build_button(chat_id):
     data = get_data(chat_id)
     name = data.get("button", "📜 ʀᴜʟᴇs")
 
+    deep_link = f"https://t.me/{BOT_USERNAME}?start=rules_{chat_id}"
+
     return InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    name,
-                    callback_data="show_rules",
-                    style=ButtonStyle.PRIMARY
-                )
-            ]
-        ]
+        [[InlineKeyboardButton(name, url=deep_link)]]
     )
 
 # ================== SET RULES ==================
 @app.on_message(filters.command("setrules") & filters.group)
-async def setrules(client, message: Message):
+async def setrules_cmd(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
         return await message.reply("❌ ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
@@ -82,11 +77,11 @@ async def setrules(client, message: Message):
     text = message.text.split(None, 1)[1]
     set_rules(message.chat.id, text)
 
-    await message.reply("✅ ʀᴜʟᴇs sᴇᴛ sᴜᴄᴄᴇssғᴜʟʟʏ")
+    await message.reply("✅ ʀᴜʟᴇs sᴇᴛ")
 
 # ================== GET RULES ==================
 @app.on_message(filters.command("rules") & filters.group)
-async def rules(client, message: Message):
+async def rules_cmd(client, message: Message):
     data = get_data(message.chat.id)
 
     if "rules" not in data:
@@ -94,7 +89,6 @@ async def rules(client, message: Message):
 
     text = data["rules"]
 
-    # ROSE STYLE FLOW
     if "{rules}" in text:
         msg = text.replace("{rules}", "").strip()
 
@@ -105,50 +99,31 @@ async def rules(client, message: Message):
     else:
         await message.reply(text)
 
-# ================== CALLBACK ==================
-@app.on_callback_query(filters.regex("^show_rules$"))
-async def show_rules(client, query):
-    data = get_data(query.message.chat.id)
+# ================== START HANDLER (DM RULES) ==================
+@app.on_message(filters.command("start") & filters.private)
+async def start_handler(client, message: Message):
 
-    if "rules" not in data:
-        return await query.answer("ɴᴏ ʀᴜʟᴇs", show_alert=True)
+    if len(message.command) > 1:
+        data = message.command[1]
 
-    text = data["rules"].replace("{rules}", "").strip()
-    private = data.get("private", False)
+        if data.startswith("rules_"):
+            chat_id = int(data.split("_")[1])
+            data_db = get_data(chat_id)
 
-    bot_username = (await client.get_me()).username
+            if "rules" not in data_db:
+                return await message.reply("❌ ɴᴏ ʀᴜʟᴇs sᴇᴛ")
 
-    # PRIVATE RULES MODE
-    if private:
-        try:
-            await client.send_message(
-                query.from_user.id,
-                f"📜 **ʀᴜʟᴇs**\n\n{text}"
-            )
-            return await query.answer("📩 ᴄʜᴇᴄᴋ ᴘᴍ", show_alert=True)
+            text = data_db["rules"].replace("{rules}", "").strip()
 
-        except:
-            return await query.message.reply(
-                "⚠️ ᴘʟᴇᴀsᴇ sᴛᴀʀᴛ ᴍᴇ ғɪʀsᴛ",
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                "🚀 sᴛᴀʀᴛ ʙᴏᴛ",
-                                url=f"https://t.me/waifuxmusicbot?start=rules"
-                            )
-                        ]
-                    ]
-                )
+            return await message.reply(
+                f"📜 **ʀᴜʟᴇs ғᴏʀ ᴄʜᴀᴛ {chat_id}**\n\n{text}"
             )
 
-    else:
-        await query.answer()
-        await query.message.reply(f"📜 **ʀᴜʟᴇs**\n\n{text}")
+    await message.reply("✨ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ!")
 
 # ================== PRIVATE TOGGLE ==================
 @app.on_message(filters.command("privaterules") & filters.group)
-async def privaterules(client, message: Message):
+async def privaterules_cmd(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
         return await message.reply("❌ ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
@@ -157,17 +132,17 @@ async def privaterules(client, message: Message):
 
     arg = message.command[1].lower()
 
-    if arg in ["on", "yes", "true"]:
+    if arg in ["on", "yes"]:
         set_private(message.chat.id, True)
-        await message.reply("✅ ᴘʀɪᴠᴀᴛᴇ ʀᴜʟᴇs ᴇɴᴀʙʟᴇᴅ")
+        await message.reply("✅ ᴘʀɪᴠᴀᴛᴇ ᴍᴏᴅᴇ ᴏɴ")
 
-    elif arg in ["off", "no", "false"]:
+    elif arg in ["off", "no"]:
         set_private(message.chat.id, False)
-        await message.reply("❌ ᴘʀɪᴠᴀᴛᴇ ʀᴜʟᴇs ᴅɪsᴀʙʟᴇᴅ")
+        await message.reply("❌ ᴘʀɪᴠᴀᴛᴇ ᴍᴏᴅᴇ ᴏғғ")
 
-# ================== SET BUTTON NAME ==================
+# ================== SET BUTTON ==================
 @app.on_message(filters.command("setrulesbutton") & filters.group)
-async def setrulesbutton(client, message: Message):
+async def setrulesbutton_cmd(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
         return await message.reply("❌ ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
@@ -181,7 +156,7 @@ async def setrulesbutton(client, message: Message):
 
 # ================== RESET BUTTON ==================
 @app.on_message(filters.command("resetrulesbutton") & filters.group)
-async def resetrulesbutton(client, message: Message):
+async def resetbtn_cmd(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
         return await message.reply("❌ ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
@@ -190,7 +165,7 @@ async def resetrulesbutton(client, message: Message):
 
 # ================== RESET RULES ==================
 @app.on_message(filters.command("resetrules") & filters.group)
-async def resetrules(client, message: Message):
+async def resetrules_cmd(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
         return await message.reply("❌ ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
