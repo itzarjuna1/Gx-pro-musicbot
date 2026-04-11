@@ -53,7 +53,7 @@ async def mstart(client, message: Message):
     await message.reply(
         mstart_text(),
         reply_markup=mstart_buttons(),
-        parse_mode="HTML"   # IMPORTANT
+        parse_mode="html"   # IMPORTANT
     )
 
 # ================== CALLBACK ==================
