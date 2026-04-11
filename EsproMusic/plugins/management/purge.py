@@ -1,6 +1,3 @@
-
-# ================== ROSE STYLE PURGE SYSTEM ==================
-
 import asyncio
 import time
 
@@ -10,7 +7,6 @@ from pyrogram.enums import ChatMemberStatus
 
 from EsproMusic import app
 
-# ================== ADMIN CHECK ==================
 async def is_admin(client, chat_id, user_id):
     try:
         member = await client.get_chat_member(chat_id, user_id)
@@ -21,8 +17,6 @@ async def is_admin(client, chat_id, user_id):
     except:
         return False
 
-
-# ================== PURGE ==================
 @app.on_message(filters.command("purge") & filters.group)
 async def purge(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
@@ -68,8 +62,6 @@ async def purge(client, message: Message):
     await asyncio.sleep(2)
     await m.delete()
 
-
-# ================== SILENT PURGE ==================
 @app.on_message(filters.command("spurge") & filters.group)
 async def spurge(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
@@ -98,7 +90,6 @@ async def spurge(client, message: Message):
                 pass
 
 
-# ================== DELETE SINGLE ==================
 @app.on_message(filters.command("del") & filters.group)
 async def delete_msg(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
@@ -110,3 +101,6 @@ async def delete_msg(client, message: Message):
             await message.delete()
         except:
             pass
+
+#file written by @itzarjuna01 © some errors spotted were fixed via ai 
+#any marks of ai should be considered as ai fixes 
