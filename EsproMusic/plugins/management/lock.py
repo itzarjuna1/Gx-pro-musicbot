@@ -1,4 +1,4 @@
-# ================== LOCK SYSTEM (ULTRA FINAL) ==================
+# ================== LOCK SYSTEM (ULTRA FINAL FIXED) ==================
 
 import re
 from pyrogram import filters
@@ -13,6 +13,9 @@ from config import MONGO_DB_URI
 mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 locks_db = db["locks"]
+
+# ================== CACHE ==================
+LOCK_CACHE = {}
 
 PAGE_SIZE = 6
 
@@ -71,44 +74,50 @@ LOCK_LIST = list(LOCKS.keys())
 async def is_admin(client, chat_id, user_id):
     try:
         member = await client.get_chat_member(chat_id, user_id)
-        return member.status in (
-            ChatMemberStatus.ADMINISTRATOR,
-            ChatMemberStatus.OWNER
-        )
+        return member.status in (ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER)
     except:
         return False
 
 # ================== DB ==================
 def get_locks(chat_id):
+    if chat_id in LOCK_CACHE:
+        return LOCK_CACHE[chat_id]
+
     data = locks_db.find_one({"chat_id": chat_id})
-    return data["locks"] if data else []
+    locks = data["locks"] if data else []
+    LOCK_CACHE[chat_id] = locks
+    return locks
+
+def save_locks(chat_id, locks):
+    LOCK_CACHE[chat_id] = locks
+    locks_db.update_one({"chat_id": chat_id}, {"$set": {"locks": locks}}, upsert=True)
 
 def toggle_lock(chat_id, lock):
-    if lock == "all":
-        locks_db.update_one(
-            {"chat_id": chat_id},
-            {"$set": {"locks": ["all"]}},
-            upsert=True
-        )
-        return True
-
     locks = get_locks(chat_id)
+
+    if lock == "all":
+        locks = [] if "all" in locks else ["all"]
+        save_locks(chat_id, locks)
+        return "all" in locks
+
+    if "all" in locks:
+        locks.remove("all")
+
     if lock in locks:
-        locks_db.update_one({"chat_id": chat_id}, {"$pull": {"locks": lock}})
+        locks.remove(lock)
+        save_locks(chat_id, locks)
         return False
     else:
-        locks_db.update_one(
-            {"chat_id": chat_id},
-            {"$addToSet": {"locks": lock}},
-            upsert=True
-        )
+        locks.append(lock)
+        save_locks(chat_id, locks)
         return True
 
 def unlock_all(chat_id):
+    LOCK_CACHE[chat_id] = []
     locks_db.delete_one({"chat_id": chat_id})
 
 # ================== STYLE ==================
-def get_pattern_style(i):
+def style(i):
     return [ButtonStyle.PRIMARY, ButtonStyle.SUCCESS, ButtonStyle.DANGER][i % 3]
 
 # ================== UI ==================
@@ -116,8 +125,7 @@ def build_panel(chat_id, page=0):
     locks = get_locks(chat_id)
     total_pages = (len(LOCK_LIST) - 1) // PAGE_SIZE
 
-    start = page * PAGE_SIZE
-    items = LOCK_LIST[start:start + PAGE_SIZE]
+    items = LOCK_LIST[page * PAGE_SIZE:(page + 1) * PAGE_SIZE]
 
     buttons, row = [], []
 
@@ -126,7 +134,7 @@ def build_panel(chat_id, page=0):
             InlineKeyboardButton(
                 f"{'🟢' if lock in locks else '🔴'} {lock}",
                 callback_data=f"toggle_{lock}_{page}",
-                style=get_pattern_style(i)
+                style=style(i)
             )
         )
         if i % 2 == 0:
@@ -136,22 +144,14 @@ def build_panel(chat_id, page=0):
     if row:
         buttons.append(row)
 
-    # ===== NAVIGATION =====
     nav = []
-
     if page > 0:
-        nav.append(
-            InlineKeyboardButton("⏮ ʙᴀᴄᴋ", callback_data=f"page_{page-1}", style=ButtonStyle.DANGER)
-        )
+        nav.append(InlineKeyboardButton("⏮ ʙᴀᴄᴋ", callback_data=f"page_{page-1}", style=ButtonStyle.DANGER))
 
     if page < total_pages:
-        nav.append(
-            InlineKeyboardButton("ɴᴇxᴛ ⏭", callback_data=f"page_{page+1}", style=ButtonStyle.PRIMARY)
-        )
+        nav.append(InlineKeyboardButton("ɴᴇxᴛ ⏭", callback_data=f"page_{page+1}", style=ButtonStyle.PRIMARY))
     else:
-        nav.append(
-            InlineKeyboardButton("🔄 ғɪʀsᴛ", callback_data="page_0", style=ButtonStyle.SUCCESS)
-        )
+        nav.append(InlineKeyboardButton("🔄 ғɪʀsᴛ", callback_data="page_0", style=ButtonStyle.SUCCESS))
 
     if nav:
         buttons.append(nav)
@@ -172,7 +172,7 @@ async def lock_panel(client, message: Message):
 
 # ================== CALLBACK ==================
 @app.on_callback_query()
-async def callbacks(client, query):
+async def cb(client, query):
     chat_id = query.message.chat.id
 
     if not await is_admin(client, chat_id, query.from_user.id):
@@ -182,12 +182,13 @@ async def callbacks(client, query):
 
     if data == "unlock_all":
         unlock_all(chat_id)
+        return await query.message.edit_reply_markup(build_panel(chat_id, 0))
 
-    elif data.startswith("page_"):
+    if data.startswith("page_"):
         page = int(data.split("_")[1])
         return await query.message.edit_reply_markup(build_panel(chat_id, page))
 
-    elif data.startswith("toggle_"):
+    if data.startswith("toggle_"):
         _, lock, page = data.split("_")
         toggle_lock(chat_id, lock)
         return await query.message.edit_reply_markup(build_panel(chat_id, int(page)))
