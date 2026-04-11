@@ -10,7 +10,7 @@ from EsproMusic import app
 
 
 # ================== COMMAND ==================
-@app.on_message(filters.command("checkmynet") & filters.private)
+@app.on_message(filters.command("checkmynet"))
 async def check_net(client, message: Message):
 
     start = time.time()
