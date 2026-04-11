@@ -14,7 +14,7 @@ mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 locks_db = db["locks"]
 
-PAGE_SIZE = 6  # 2 per row = 3 rows
+PAGE_SIZE = 6
 
 # ================== LOCK DATA ==================
 LOCKS = {
@@ -32,12 +32,9 @@ LOCKS = {
 LOCK_LIST = list(LOCKS.keys())
 
 # ================== ADMIN ==================
-async def is_admin(client, message: Message):
+async def is_admin(client, chat_id, user_id):
     try:
-        member = await client.get_chat_member(
-            message.chat.id,
-            message.from_user.id
-        )
+        member = await client.get_chat_member(chat_id, user_id)
         return member.status in (
             ChatMemberStatus.ADMINISTRATOR,
             ChatMemberStatus.OWNER
@@ -133,10 +130,15 @@ def detail_text(lock, enabled):
         f"╰────────────────╯"
     )
 
-# ================== COMMAND ==================
-@app.on_message(filters.command(["lock", "locktypes"]) & filters.group)
+# ================== COMMANDS ==================
+@app.on_message(filters.command("lock") & filters.group)
 async def lock_panel(client, message: Message):
-    if not await is_admin(client, message):
+
+    bot = await client.get_chat_member(message.chat.id, "me")
+    if bot.status not in ["administrator", "creator"]:
+        return await message.reply("ɪ ɴᴇᴇᴅ ᴀᴅᴍɪɴ")
+
+    if not await is_admin(client, message.chat.id, message.from_user.id):
         return await message.reply("ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
     await message.reply(
@@ -144,10 +146,23 @@ async def lock_panel(client, message: Message):
         reply_markup=build_panel(message.chat.id, 0)
     )
 
-# ================== UNLOCK ALL ==================
+
+@app.on_message(filters.command("locktypes") & filters.group)
+async def locktypes_cmd(client, message: Message):
+
+    if not await is_admin(client, message.chat.id, message.from_user.id):
+        return await message.reply("ᴀᴅᴍɪɴs ᴏɴʟʏ")
+
+    await message.reply(
+        main_text(),
+        reply_markup=build_panel(message.chat.id, 0)
+    )
+
+
 @app.on_message(filters.command("unlockall") & filters.group)
 async def unlockall_cmd(client, message: Message):
-    if not await is_admin(client, message):
+
+    if not await is_admin(client, message.chat.id, message.from_user.id):
         return await message.reply("ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
     unlock_all(message.chat.id)
@@ -156,14 +171,8 @@ async def unlockall_cmd(client, message: Message):
 # ================== CALLBACK ==================
 @app.on_callback_query()
 async def callbacks(client, query):
-    fake_msg = Message(
-        id=0,
-        date=None,
-        chat=query.message.chat,
-        from_user=query.from_user
-    )
 
-    if not await is_admin(client, fake_msg):
+    if not await is_admin(client, query.message.chat.id, query.from_user.id):
         return await query.answer("ᴀᴅᴍɪɴs ᴏɴʟʏ", show_alert=True)
 
     data = query.data
@@ -236,14 +245,15 @@ async def callbacks(client, query):
 # ================== ENFORCER ==================
 @app.on_message(filters.group, group=1)
 async def enforce(client, message: Message):
-    # ❌ DO NOT TOUCH COMMANDS
+
     if message.text and message.text.startswith("/"):
         return
 
     locks = get_locks(message.chat.id)
 
-    if await is_admin(client, message):
-        return
+    if message.from_user:
+        if await is_admin(client, message.chat.id, message.from_user.id):
+            return
 
     try:
         if "photo" in locks and message.photo:
