@@ -1,6 +1,7 @@
-# ================== GOOGLE SEARCH SYSTEM ==================
+# ================== GOOGLE SEARCH SYSTEM (FIXED) ==================
 
 import aiohttp
+from bs4 import BeautifulSoup
 from pyrogram import filters
 from pyrogram.types import Message
 
@@ -9,25 +10,30 @@ from EsproMusic import app
 
 # ================== SEARCH FUNCTION ==================
 async def search_web(query):
-    url = f"https://api.duckduckgo.com/?q={query}&format=json"
+    url = f"https://html.duckduckgo.com/html/?q={query}"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            data = await resp.json()
+        async with session.get(url, headers=headers) as resp:
+            html = await resp.text()
 
-    # Priority 1: direct answer
-    if data.get("AbstractText"):
-        return data["AbstractText"]
+    soup = BeautifulSoup(html, "html.parser")
 
-    # Priority 2: instant answer
-    if data.get("Answer"):
-        return data["Answer"]
+    results = []
 
-    # Priority 3: heading + related
-    if data.get("Heading"):
-        return data["Heading"]
+    for result in soup.find_all("a", class_="result__a", limit=3):
+        title = result.get_text()
+        link = result.get("href")
 
-    return "❌ ɴᴏ ᴀɴsᴡᴇʀ ғᴏᴜɴᴅ"
+        results.append(f"🔗 {title}\n{link}")
+
+    if not results:
+        return "❌ ɴᴏ ʀᴇsᴜʟᴛs ғᴏᴜɴᴅ"
+
+    return "\n\n".join(results)
 
 
 # ================== COMMAND ==================
@@ -45,8 +51,8 @@ async def google_search(client, message: Message):
 
         await msg.edit(
             f"🔎 ǫᴜᴇʀʏ: {query}\n\n"
-            f"💡 ᴀɴsᴡᴇʀ:{result}"
+            f"📄 ʀᴇsᴜʟᴛs:{result}"
         )
 
     except Exception as e:
-        await msg.edit("❌ ғᴀɪʟᴇᴅ ᴛᴏ ғᴇᴛᴄʜ ʀᴇsᴜʟᴛ")
+        await msg.edit("❌ ᴇʀʀᴏʀ ғᴇᴛᴄʜɪɴɢ ʀᴇsᴜʟᴛs")
