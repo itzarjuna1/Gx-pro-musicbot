@@ -1,4 +1,4 @@
-# ================== ROSE STYLE RULES SYSTEM ==================
+# ================== ROSE STYLE RULES SYSTEM (FINAL) ==================
 
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
@@ -13,7 +13,7 @@ mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 rules_db = db["rules"]
 
-# ================== ADMIN ==================
+# ================== ADMIN CHECK ==================
 async def is_admin(client, chat_id, user_id):
     try:
         member = await client.get_chat_member(chat_id, user_id)
@@ -94,7 +94,7 @@ async def rules(client, message: Message):
 
     text = data["rules"]
 
-    # ===== ROSE STYLE FLOW =====
+    # ROSE STYLE FLOW
     if "{rules}" in text:
         msg = text.replace("{rules}", "").strip()
 
@@ -116,16 +116,32 @@ async def show_rules(client, query):
     text = data["rules"].replace("{rules}", "").strip()
     private = data.get("private", False)
 
-    # ===== PRIVATE RULES =====
+    bot_username = (await client.get_me()).username
+
+    # PRIVATE RULES MODE
     if private:
         try:
             await client.send_message(
                 query.from_user.id,
                 f"📜 **ʀᴜʟᴇs**\n\n{text}"
             )
-            await query.answer("📩 ᴄʜᴇᴄᴋ ᴘᴍ", show_alert=True)
+            return await query.answer("📩 ᴄʜᴇᴄᴋ ᴘᴍ", show_alert=True)
+
         except:
-            await query.answer("⚠️ sᴛᴀʀᴛ ᴍᴇ ɪɴ ᴘᴍ", show_alert=True)
+            return await query.message.reply(
+                "⚠️ ᴘʟᴇᴀsᴇ sᴛᴀʀᴛ ᴍᴇ ғɪʀsᴛ",
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "🚀 sᴛᴀʀᴛ ʙᴏᴛ",
+                                url=f"https://t.me/{bot_username}?start=rules"
+                            )
+                        ]
+                    ]
+                )
+            )
+
     else:
         await query.answer()
         await query.message.reply(f"📜 **ʀᴜʟᴇs**\n\n{text}")
@@ -149,7 +165,7 @@ async def privaterules(client, message: Message):
         set_private(message.chat.id, False)
         await message.reply("❌ ᴘʀɪᴠᴀᴛᴇ ʀᴜʟᴇs ᴅɪsᴀʙʟᴇᴅ")
 
-# ================== BUTTON NAME ==================
+# ================== SET BUTTON NAME ==================
 @app.on_message(filters.command("setrulesbutton") & filters.group)
 async def setrulesbutton(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
