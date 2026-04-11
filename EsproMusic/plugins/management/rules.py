@@ -1,7 +1,7 @@
-# ================== RULES SYSTEM ==================
+# ================== RULES SYSTEM (ULTRA FINAL FULL) ==================
 
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from pyrogram.enums import ChatMemberStatus, ButtonStyle
 from pymongo import MongoClient
 
@@ -13,7 +13,7 @@ mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 rules_db = db["rules"]
 
-# ================== ADMIN ==================
+# ================== ADMIN CHECK ==================
 async def is_admin(client, chat_id, user_id):
     try:
         member = await client.get_chat_member(chat_id, user_id)
@@ -24,61 +24,58 @@ async def is_admin(client, chat_id, user_id):
     except:
         return False
 
-# ================== DB ==================
-def get_rules(chat_id):
-    return rules_db.find_one({"chat_id": chat_id}) or {}
+async def is_owner(client, chat_id, user_id):
+    try:
+        member = await client.get_chat_member(chat_id, user_id)
+        return member.status == ChatMemberStatus.OWNER
+    except:
+        return False
 
+# ================== DB FUNCTIONS ==================
 def set_rules(chat_id, text):
-    rules_db.update_one({"chat_id": chat_id}, {"$set": {"rules": text}}, upsert=True)
+    rules_db.update_one(
+        {"chat_id": chat_id},
+        {"$set": {"rules": text}},
+        upsert=True
+    )
+
+def get_data(chat_id):
+    data = rules_db.find_one({"chat_id": chat_id})
+    return data if data else {}
 
 def reset_rules(chat_id):
     rules_db.delete_one({"chat_id": chat_id})
 
 def set_private(chat_id, value):
-    rules_db.update_one({"chat_id": chat_id}, {"$set": {"private": value}}, upsert=True)
+    rules_db.update_one(
+        {"chat_id": chat_id},
+        {"$set": {"private": value}},
+        upsert=True
+    )
 
-def set_button(chat_id, name):
-    rules_db.update_one({"chat_id": chat_id}, {"$set": {"button": name}}, upsert=True)
+def set_button_name(chat_id, name):
+    rules_db.update_one(
+        {"chat_id": chat_id},
+        {"$set": {"button": name}},
+        upsert=True
+    )
 
-# ================== /rules ==================
-@app.on_message(filters.command("rules") & filters.group)
-async def rules(client, message: Message):
-    data = get_rules(message.chat.id)
+# ================== BUTTON ==================
+def rules_button(chat_id):
+    data = get_data(chat_id)
+    name = data.get("button", "📜 ʀᴜʟᴇs")
 
-    text = data.get("rules", "ɴᴏ ʀᴜʟᴇs sᴇᴛ.")
-    private = data.get("private", False)
-    button_name = data.get("button", "📜 ʀᴜʟᴇs")
-
-    # noformat
-    if len(message.command) > 1 and message.command[1].lower() == "noformat":
-        return await message.reply_text(text)
-
-    if private:
-        btn = InlineKeyboardMarkup(
-            [[
+    return InlineKeyboardMarkup(
+        [
+            [
                 InlineKeyboardButton(
-                    button_name,
-                    url=f"https://t.me/{(await client.get_me()).username}?start=rules_{message.chat.id}",
+                    name,
+                    callback_data="show_rules",
                     style=ButtonStyle.PREMIUM
                 )
-            ]]
-        )
-        return await message.reply_text(
-            "📜 ᴄʟɪᴄᴋ ʙᴇʟᴏᴡ ᴛᴏ ᴠɪᴇᴡ ʀᴜʟᴇs.",
-            reply_markup=btn
-        )
-
-    await message.reply_text(text)
-
-# ================== PRIVATE RULES ==================
-@app.on_message(filters.private & filters.regex(r"^/start rules_(\d+)"))
-async def private_rules(client, message: Message):
-    chat_id = int(message.matches[0].group(1))
-    data = get_rules(chat_id)
-
-    text = data.get("rules", "ɴᴏ ʀᴜʟᴇs sᴇᴛ.")
-
-    await message.reply_text(text)
+            ]
+        ]
+    )
 
 # ================== SET RULES ==================
 @app.on_message(filters.command("setrules") & filters.group)
@@ -94,34 +91,71 @@ async def setrules(client, message: Message):
 
     await message.reply("✅ ʀᴜʟᴇs sᴇᴛ")
 
-# ================== RESET RULES ==================
-@app.on_message(filters.command("resetrules") & filters.group)
-async def resetrules(client, message: Message):
-    if not await is_admin(client, message.chat.id, message.from_user.id):
-        return await message.reply("ᴀᴅᴍɪɴs ᴏɴʟʏ")
+# ================== GET RULES ==================
+@app.on_message(filters.command("rules") & filters.group)
+async def rules(client, message: Message):
+    data = get_data(message.chat.id)
 
-    reset_rules(message.chat.id)
-    await message.reply("♻️ ʀᴜʟᴇs ʀᴇsᴇᴛ")
+    if "rules" not in data:
+        return await message.reply("ɴᴏ ʀᴜʟᴇs sᴇᴛ")
 
-# ================== PRIVATE TOGGLE ==================
+    text = data["rules"]
+    private = data.get("private", False)
+
+    # ===== HANDLE {rules} BUTTON =====
+    if "{rules}" in text:
+        clean = text.replace("{rules}", "").strip()
+
+        await message.reply(
+            clean,
+            reply_markup=rules_button(message.chat.id)
+        )
+    else:
+        await message.reply(text)
+
+# ================== CALLBACK ==================
+@app.on_callback_query(filters.regex("show_rules"))
+async def show_rules(client, query):
+    data = get_data(query.message.chat.id)
+
+    if "rules" not in data:
+        return await query.answer("ɴᴏ ʀᴜʟᴇs", show_alert=True)
+
+    text = data["rules"].replace("{rules}", "").strip()
+    private = data.get("private", False)
+
+    if private:
+        try:
+            await client.send_message(
+                query.from_user.id,
+                f"📜 ʀᴜʟᴇs:\n\n{text}"
+            )
+            await query.answer("📩 ᴄʜᴇᴄᴋ ᴘᴍ", show_alert=True)
+        except:
+            await query.answer("sᴛᴀʀᴛ ᴍᴇ ɪɴ ᴘᴍ ғɪʀsᴛ", show_alert=True)
+    else:
+        await query.answer()
+        await query.message.reply(f"📜 ʀᴜʟᴇs:\n\n{text}")
+
+# ================== PRIVATE RULES ==================
 @app.on_message(filters.command("privaterules") & filters.group)
 async def privaterules(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
         return await message.reply("ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
     if len(message.command) < 2:
-        return await message.reply("ᴜsᴇ: /privaterules yes/no")
+        return await message.reply("ᴜsᴇ: /privaterules on/off")
 
-    val = message.command[1].lower()
-    state = val in ["yes", "on", "true"]
+    arg = message.command[1].lower()
 
-    set_private(message.chat.id, state)
+    if arg in ["yes", "on", "true"]:
+        set_private(message.chat.id, True)
+        await message.reply("✅ ᴘʀɪᴠᴀᴛᴇ ʀᴜʟᴇs ᴇɴᴀʙʟᴇᴅ")
+    elif arg in ["no", "off", "false"]:
+        set_private(message.chat.id, False)
+        await message.reply("❌ ᴘʀɪᴠᴀᴛᴇ ʀᴜʟᴇs ᴅɪsᴀʙʟᴇᴅ")
 
-    await message.reply(
-        f"🔐 ᴘʀɪᴠᴀᴛᴇ ʀᴜʟᴇs: {'ᴇɴᴀʙʟᴇᴅ' if state else 'ᴅɪsᴀʙʟᴇᴅ'}"
-    )
-
-# ================== SET BUTTON ==================
+# ================== SET BUTTON NAME ==================
 @app.on_message(filters.command("setrulesbutton") & filters.group)
 async def setrulesbutton(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
@@ -131,9 +165,9 @@ async def setrulesbutton(client, message: Message):
         return await message.reply("ᴜsᴇ: /setrulesbutton <ɴᴀᴍᴇ>")
 
     name = message.text.split(None, 1)[1]
-    set_button(message.chat.id, name)
+    set_button_name(message.chat.id, name)
 
-    await message.reply("🔘 ʙᴜᴛᴛᴏɴ ᴜᴘᴅᴀᴛᴇᴅ")
+    await message.reply("✅ ʙᴜᴛᴛᴏɴ ᴜᴘᴅᴀᴛᴇᴅ")
 
 # ================== RESET BUTTON ==================
 @app.on_message(filters.command("resetrulesbutton") & filters.group)
@@ -141,6 +175,14 @@ async def resetrulesbutton(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
         return await message.reply("ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
-    set_button(message.chat.id, "📜 ʀᴜʟᴇs")
-
+    set_button_name(message.chat.id, "📜 ʀᴜʟᴇs")
     await message.reply("♻️ ʙᴜᴛᴛᴏɴ ʀᴇsᴇᴛ")
+
+# ================== RESET RULES ==================
+@app.on_message(filters.command("resetrules") & filters.group)
+async def resetrules(client, message: Message):
+    if not await is_admin(client, message.chat.id, message.from_user.id):
+        return await message.reply("ᴀᴅᴍɪɴs ᴏɴʟʏ")
+
+    reset_rules(message.chat.id)
+    await message.reply("♻️ ʀᴜʟᴇs ʀᴇsᴇᴛ")
