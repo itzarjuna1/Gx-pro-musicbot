@@ -1,5 +1,3 @@
-# ================== IMPORT / EXPORT SYSTEM ==================
-
 import json
 import time
 from pyrogram import filters
@@ -10,7 +8,6 @@ from pymongo import MongoClient
 from EsproMusic import app
 from config import MONGO_DB_URI
 
-# ================== DB ==================
 mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 
@@ -24,7 +21,6 @@ COLLECTIONS = {
     "pins": db["pins"],
 }
 
-# ================== RATE LIMIT ==================
 LAST_USED = {}
 
 def rate_limit(chat_id):
@@ -34,7 +30,6 @@ def rate_limit(chat_id):
     LAST_USED[chat_id] = now
     return True
 
-# ================== ADMIN ==================
 async def is_admin(client, chat_id, user_id):
     member = await client.get_chat_member(chat_id, user_id)
     return member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]
@@ -43,7 +38,6 @@ async def is_owner(client, chat_id, user_id):
     member = await client.get_chat_member(chat_id, user_id)
     return member.status == ChatMemberStatus.OWNER
 
-# ================== EXPORT ==================
 @app.on_message(filters.command("export") & filters.group)
 async def export_data(client, message: Message):
 
@@ -76,7 +70,6 @@ async def export_data(client, message: Message):
         caption="📦 ᴄʜᴀᴛ ᴇxᴘᴏʀᴛ ʀᴇᴀᴅʏ"
     )
 
-# ================== IMPORT ==================
 @app.on_message(filters.command("import") & filters.group)
 async def import_data(client, message: Message):
 
@@ -112,7 +105,6 @@ async def import_data(client, message: Message):
 
     await message.reply("✅ ɪᴍᴘᴏʀᴛ ᴄᴏᴍᴘʟᴇᴛᴇ")
 
-# ================== RESET ==================
 @app.on_message(filters.command("reset") & filters.group)
 async def reset_chat(client, message: Message):
 
