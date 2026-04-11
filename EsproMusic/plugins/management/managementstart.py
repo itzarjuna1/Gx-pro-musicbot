@@ -38,8 +38,7 @@ async def mstart(client, message: Message):
 
     await message.reply_text(
         text,
-        reply_markup=mstart_buttons(),
-        parse_mode="html",  # IMPORTANT: lowercase
+        reply_markup=mstart_buttons(),# IMPORTANT: lowercase
         disable_web_page_preview=True
     )
 
