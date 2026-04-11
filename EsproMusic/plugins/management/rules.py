@@ -135,7 +135,7 @@ async def show_rules(client, query):
                         [
                             InlineKeyboardButton(
                                 "🚀 sᴛᴀʀᴛ ʙᴏᴛ",
-                                url=f"https://t.me/{bot_username}?start=rules"
+                                url=f"https://t.me/waifuxmusicbot?start=rules"
                             )
                         ]
                     ]
