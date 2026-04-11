@@ -1,4 +1,4 @@
-
+# ================== LOCK SYSTEM (ULTRA FINAL) ==================
 
 import re
 from pyrogram import filters
@@ -9,12 +9,14 @@ from pymongo import MongoClient
 from EsproMusic import app
 from config import MONGO_DB_URI
 
+# ================== MONGO ==================
 mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 locks_db = db["locks"]
 
 PAGE_SIZE = 6
 
+# ================== LOCK DATA ==================
 LOCKS = {
     "all": "ʟᴏᴄᴋ ᴇᴠᴇʀʏᴛʜɪɴɢ",
     "album": "ʙʟᴏᴄᴋ ᴀʟʙᴜᴍs",
@@ -25,7 +27,7 @@ LOCKS = {
     "button": "ʙʟᴏᴄᴋ ʙᴜᴛᴛᴏɴs",
     "cashtag": "ʙʟᴏᴄᴋ $ᴛᴀɢs",
     "checklist": "ʙʟᴏᴄᴋ ᴄʜᴇᴄᴋʟɪsᴛ",
-    "cjk": "ʙʟᴏᴄᴋ ᴄᴊᴋ ᴛᴇxᴛ",
+    "cjk": "ʙʟᴏᴄᴋ ᴄᴊᴋ",
     "command": "ʙʟᴏᴄᴋ /ᴄᴏᴍᴍᴀɴᴅs",
     "comment": "ʙʟᴏᴄᴋ ᴄᴏᴍᴍᴇɴᴛs",
     "contact": "ʙʟᴏᴄᴋ ᴄᴏɴᴛᴀᴄᴛs",
@@ -33,38 +35,39 @@ LOCKS = {
     "document": "ʙʟᴏᴄᴋ ғɪʟᴇs",
     "email": "ʙʟᴏᴄᴋ ᴇᴍᴀɪʟs",
     "emoji": "ʙʟᴏᴄᴋ ᴇᴍᴏᴊɪ",
-    "emojicustom": "ʙʟᴏᴄᴋ ᴄᴜsᴛᴏᴍ ᴇᴍᴏᴊɪ",
-    "emojigame": "ʙʟᴏᴄᴋ ᴇᴍᴏᴊɪ ɢᴀᴍᴇs",
+    "emojicustom": "ʙʟᴏᴄᴋ ᴄᴜsᴛᴏᴍ",
+    "emojigame": "ʙʟᴏᴄᴋ ɢᴀᴍᴇ",
     "emojionly": "ᴏɴʟʏ ᴇᴍᴏᴊɪ",
-    "externalreply": "ʙʟᴏᴄᴋ ᴇxᴛᴇʀɴᴀʟ ʀᴇᴘʟʏ",
-    "forward": "ʙʟᴏᴄᴋ ғᴏʀᴡᴀʀᴅs",
-    "forwardbot": "ʙʟᴏᴄᴋ ғᴏʀᴡᴀʀᴅ ʙᴏᴛ",
-    "forwardchannel": "ʙʟᴏᴄᴋ ғᴏʀᴡᴀʀᴅ ᴄʜᴀɴɴᴇʟ",
-    "forwardstory": "ʙʟᴏᴄᴋ ғᴏʀᴡᴀʀᴅ sᴛᴏʀʏ",
-    "forwarduser": "ʙʟᴏᴄᴋ ғᴏʀᴡᴀʀᴅ ᴜsᴇʀ",
+    "externalreply": "ʙʟᴏᴄᴋ ʀᴇᴘʟʏ",
+    "forward": "ʙʟᴏᴄᴋ ғᴏʀᴡᴀʀᴅ",
+    "forwardbot": "ʙʟᴏᴄᴋ ғʙᴏᴛ",
+    "forwardchannel": "ʙʟᴏᴄᴋ ғᴄʜ",
+    "forwardstory": "ʙʟᴏᴄᴋ ғsᴛᴏʀʏ",
+    "forwarduser": "ʙʟᴏᴄᴋ ғᴜsᴇʀ",
     "game": "ʙʟᴏᴄᴋ ɢᴀᴍᴇs",
-    "gif": "ʙʟᴏᴄᴋ ɢɪғs",
-    "inline": "ʙʟᴏᴄᴋ ɪɴʟɪɴᴇ ʙᴏᴛs",
-    "invitelink": "ʙʟᴏᴄᴋ ɪɴᴠɪᴛᴇ ʟɪɴᴋs",
-    "location": "ʙʟᴏᴄᴋ ʟᴏᴄᴀᴛɪᴏɴ",
+    "gif": "ʙʟᴏᴄᴋ ɢɪғ",
+    "inline": "ʙʟᴏᴄᴋ ɪɴʟɪɴᴇ",
+    "invitelink": "ʙʟᴏᴄᴋ ɪɴᴠɪᴛᴇ",
+    "location": "ʙʟᴏᴄᴋ ʟᴏᴄ",
     "phone": "ʙʟᴏᴄᴋ ᴘʜᴏɴᴇ",
-    "photo": "ʙʟᴏᴄᴋ ᴘʜᴏᴛᴏs",
-    "poll": "ʙʟᴏᴄᴋ ᴘᴏʟʟs",
+    "photo": "ʙʟᴏᴄᴋ ᴘʜᴏᴛᴏ",
+    "poll": "ʙʟᴏᴄᴋ ᴘᴏʟʟ",
     "rtl": "ʙʟᴏᴄᴋ ʀᴛʟ",
-    "spoiler": "ʙʟᴏᴄᴋ sᴘᴏɪʟᴇʀs",
-    "sticker": "ʙʟᴏᴄᴋ sᴛɪᴄᴋᴇʀs",
-    "stickeranimated": "ʙʟᴏᴄᴋ ᴀɴɪᴍᴀᴛᴇᴅ",
-    "stickerpremium": "ʙʟᴏᴄᴋ ᴘʀᴇᴍɪᴜᴍ",
+    "spoiler": "ʙʟᴏᴄᴋ sᴘᴏɪʟᴇʀ",
+    "sticker": "ʙʟᴏᴄᴋ sᴛɪᴄᴋᴇʀ",
+    "stickeranimated": "ʙʟᴏᴄᴋ ᴀɴɪᴍ",
+    "stickerpremium": "ʙʟᴏᴄᴋ ᴘʀᴇᴍ",
     "text": "ʙʟᴏᴄᴋ ᴛᴇxᴛ",
-    "url": "ʙʟᴏᴄᴋ ʟɪɴᴋs",
-    "video": "ʙʟᴏᴄᴋ ᴠɪᴅᴇᴏs",
-    "videonote": "ʙʟᴏᴄᴋ ᴠɪᴅᴇᴏ ɴᴏᴛᴇ",
+    "url": "ʙʟᴏᴄᴋ ʟɪɴᴋ",
+    "video": "ʙʟᴏᴄᴋ ᴠɪᴅᴇᴏ",
+    "videonote": "ʙʟᴏᴄᴋ ᴠɴ",
     "voice": "ʙʟᴏᴄᴋ ᴠᴏɪᴄᴇ",
     "zalgо": "ʙʟᴏᴄᴋ ᴢᴀʟɢᴏ"
 }
 
 LOCK_LIST = list(LOCKS.keys())
 
+# ================== ADMIN ==================
 async def is_admin(client, chat_id, user_id):
     try:
         member = await client.get_chat_member(chat_id, user_id)
@@ -75,11 +78,20 @@ async def is_admin(client, chat_id, user_id):
     except:
         return False
 
+# ================== DB ==================
 def get_locks(chat_id):
     data = locks_db.find_one({"chat_id": chat_id})
     return data["locks"] if data else []
 
 def toggle_lock(chat_id, lock):
+    if lock == "all":
+        locks_db.update_one(
+            {"chat_id": chat_id},
+            {"$set": {"locks": ["all"]}},
+            upsert=True
+        )
+        return True
+
     locks = get_locks(chat_id)
     if lock in locks:
         locks_db.update_one({"chat_id": chat_id}, {"$pull": {"locks": lock}})
@@ -95,12 +107,15 @@ def toggle_lock(chat_id, lock):
 def unlock_all(chat_id):
     locks_db.delete_one({"chat_id": chat_id})
 
+# ================== STYLE ==================
 def get_pattern_style(i):
-    styles = [ButtonStyle.PRIMARY, ButtonStyle.SUCCESS, ButtonStyle.DANGER]
-    return styles[i % 3]
+    return [ButtonStyle.PRIMARY, ButtonStyle.SUCCESS, ButtonStyle.DANGER][i % 3]
 
+# ================== UI ==================
 def build_panel(chat_id, page=0):
     locks = get_locks(chat_id)
+    total_pages = (len(LOCK_LIST) - 1) // PAGE_SIZE
+
     start = page * PAGE_SIZE
     items = LOCK_LIST[start:start + PAGE_SIZE]
 
@@ -121,31 +136,47 @@ def build_panel(chat_id, page=0):
     if row:
         buttons.append(row)
 
-    if start + PAGE_SIZE < len(LOCK_LIST):
-        buttons.append([
-            InlineKeyboardButton("Next ⏭", callback_data=f"page_{page+1}", style=ButtonStyle.PRIMARY)
-        ])
+    # ===== NAVIGATION =====
+    nav = []
+
+    if page > 0:
+        nav.append(
+            InlineKeyboardButton("⏮ ʙᴀᴄᴋ", callback_data=f"page_{page-1}", style=ButtonStyle.DANGER)
+        )
+
+    if page < total_pages:
+        nav.append(
+            InlineKeyboardButton("ɴᴇxᴛ ⏭", callback_data=f"page_{page+1}", style=ButtonStyle.PRIMARY)
+        )
+    else:
+        nav.append(
+            InlineKeyboardButton("🔄 ғɪʀsᴛ", callback_data="page_0", style=ButtonStyle.SUCCESS)
+        )
+
+    if nav:
+        buttons.append(nav)
 
     buttons.append([
-        InlineKeyboardButton("Unlock All", callback_data="unlock_all", style=ButtonStyle.SUCCESS)
+        InlineKeyboardButton("🚫 ᴜɴʟᴏᴄᴋ ᴀʟʟ", callback_data="unlock_all", style=ButtonStyle.SUCCESS)
     ])
 
-    return InlineKeyboardMarkup(buttons
-                                
+    return InlineKeyboardMarkup(buttons)
+
+# ================== COMMAND ==================
 @app.on_message(filters.command("lock") & filters.group)
 async def lock_panel(client, message: Message):
     if not await is_admin(client, message.chat.id, message.from_user.id):
-        return await message.reply("Admins only")
+        return await message.reply("ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
-    await message.reply("🔐 Lock Panel", reply_markup=build_panel(message.chat.id))
+    await message.reply("🔐 ʟᴏᴄᴋ ᴘᴀɴᴇʟ", reply_markup=build_panel(message.chat.id))
 
-
+# ================== CALLBACK ==================
 @app.on_callback_query()
 async def callbacks(client, query):
     chat_id = query.message.chat.id
 
     if not await is_admin(client, chat_id, query.from_user.id):
-        return await query.answer("Admins only", show_alert=True)
+        return await query.answer("ᴀᴅᴍɪɴs ᴏɴʟʏ", show_alert=True)
 
     data = query.data
 
@@ -163,6 +194,7 @@ async def callbacks(client, query):
 
     await query.answer()
 
+# ================== ENFORCER ==================
 @app.on_message(filters.group, group=1)
 async def enforce(client, message: Message):
 
