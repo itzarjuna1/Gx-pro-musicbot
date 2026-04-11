@@ -1,7 +1,8 @@
 # ================== MANAGEMENT START PANEL ==================
 
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, ButtonStyle
+from pyrogram.enums import ParseMode
 
 from EsproMusic import app
 
@@ -37,11 +38,11 @@ def mstart_buttons():
     return InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("💬 sᴜᴘᴘᴏʀᴛ", url=SUPPORT_GROUP),
-                InlineKeyboardButton("📢 ᴄʜᴀɴɴᴇʟ", url=SUPPORT_CHANNEL),
+                InlineKeyboardButton("💬 sᴜᴘᴘᴏʀᴛ", url=SUPPORT_GROUP), style=ButtonStyle.PRIMARY
+                InlineKeyboardButton("📢 ᴄʜᴀɴɴᴇʟ", url=SUPPORT_CHANNEL), style=ButtonStyle.SUCCESS
             ],
             [
-                InlineKeyboardButton("❌ ᴄʟᴏsᴇ", callback_data="close_mstart")
+                InlineKeyboardButton("❌ ᴄʟᴏsᴇ", callback_data="close_mstart", style=ButtonStyle.DANGER)
             ]
         ]
     )
