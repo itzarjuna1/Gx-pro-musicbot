@@ -1,5 +1,5 @@
 # ================== FILTER SYSTEM (MEDIA SUPPORT FINAL) ==================
-
+#remember file written by me but errors fixed via personal ai
 import re
 from pyrogram import filters
 from pyrogram.types import Message
