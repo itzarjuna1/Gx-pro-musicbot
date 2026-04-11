@@ -4,7 +4,7 @@ from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from pyrogram.enums import ButtonStyle
 from EsproMusic import app
-from EsproMusic.utils.language import get_string
+from strings import get_string
 
 # ===== LINKS =====
 SUPPORT_GROUP = "https://t.me/theinfinity_support"
