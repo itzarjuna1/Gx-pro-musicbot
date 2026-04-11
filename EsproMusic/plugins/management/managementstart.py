@@ -10,6 +10,8 @@ import yaml
 SUPPORT_GROUP = "https://t.me/theinfinity_support"
 SUPPORT_CHANNEL = "https://t.me/theinfinitynetwork"
 
+VIDEO_URL = "https://files.catbox.moe/2y26pq.mp4"  # <-- your video
+
 # ================== LOAD STRINGS ==================
 with open("strings/langs/en.yml", "r", encoding="utf-8") as f:
     STRINGS = yaml.safe_load(f)
@@ -36,9 +38,11 @@ def mstart_buttons():
 async def mstart(client, message: Message):
     text = get_string("mstart_1")
 
-    await message.reply_text(
-        text,
-        reply_markup=mstart_buttons(),# IMPORTANT: lowercase
+    await message.reply_video(
+        video=VIDEO_URL,
+        caption=text,
+        reply_markup=mstart_buttons(),
+        parse_mode="html",
         disable_web_page_preview=True
     )
 
