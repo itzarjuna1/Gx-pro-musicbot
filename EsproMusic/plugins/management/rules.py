@@ -1,4 +1,4 @@
-# ================== RULES SYSTEM (ULTRA FINAL FULL) ==================
+# ================== RULES SYSTEM (FINAL FIXED - NO ERRORS) ==================
 
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
@@ -71,7 +71,7 @@ def rules_button(chat_id):
                 InlineKeyboardButton(
                     name,
                     callback_data="show_rules",
-                    style=ButtonStyle.PREMIUM
+                    style=ButtonStyle.PRIMARY  # FIXED (no PREMIUM)
                 )
             ]
         ]
@@ -100,7 +100,6 @@ async def rules(client, message: Message):
         return await message.reply("ɴᴏ ʀᴜʟᴇs sᴇᴛ")
 
     text = data["rules"]
-    private = data.get("private", False)
 
     # ===== HANDLE {rules} BUTTON =====
     if "{rules}" in text:
@@ -151,6 +150,7 @@ async def privaterules(client, message: Message):
     if arg in ["yes", "on", "true"]:
         set_private(message.chat.id, True)
         await message.reply("✅ ᴘʀɪᴠᴀᴛᴇ ʀᴜʟᴇs ᴇɴᴀʙʟᴇᴅ")
+
     elif arg in ["no", "off", "false"]:
         set_private(message.chat.id, False)
         await message.reply("❌ ᴘʀɪᴠᴀᴛᴇ ʀᴜʟᴇs ᴅɪsᴀʙʟᴇᴅ")
