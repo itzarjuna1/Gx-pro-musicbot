@@ -1,17 +1,14 @@
-# ================== PURGE SYSTEM (ROSE STYLE FINAL) ==================
+
+# ================== ROSE STYLE PURGE SYSTEM ==================
+
+import asyncio
+import time
 
 from pyrogram import filters
 from pyrogram.types import Message
 from pyrogram.enums import ChatMemberStatus
-from pymongo import MongoClient
 
 from EsproMusic import app
-from config import MONGO_DB_URI
-
-# ================== DB ==================
-mongo = MongoClient(MONGO_DB_URI)
-db = mongo["musicbot"]
-purge_db = db["purge"]
 
 # ================== ADMIN CHECK ==================
 async def is_admin(client, chat_id, user_id):
@@ -25,120 +22,91 @@ async def is_admin(client, chat_id, user_id):
         return False
 
 
-# ================== DELETE RANGE ==================
-async def delete_range(client, chat_id, start, end):
-    for msg_id in range(start, end + 1):
-        try:
-            await client.delete_messages(chat_id, msg_id)
-        except:
-            pass
-
-
 # ================== PURGE ==================
 @app.on_message(filters.command("purge") & filters.group)
 async def purge(client, message: Message):
-
     if not await is_admin(client, message.chat.id, message.from_user.id):
         return await message.reply("❌ ᴀᴅᴍɪɴs ᴏɴʟʏ")
 
     if not message.reply_to_message:
-        return await message.reply("⚠️ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ")
+        return await message.reply("ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ")
 
-    start = message.reply_to_message.id
-    end = message.id
+    start_time = time.time()
+    deleted = 0
 
-    args = message.command
+    # CASE 1: /purge X
+    if len(message.command) > 1 and message.command[1].isdigit():
+        count = int(message.command[1])
+        start_id = message.reply_to_message.id
 
-    # /purge 10
-    if len(args) > 1:
-        try:
-            count = int(args[1])
-            end = start + count
-        except:
-            return await message.reply("❌ ɪɴᴠᴀʟɪᴅ ɴᴜᴍʙᴇʀ")
+        for msg_id in range(start_id, start_id + count):
+            try:
+                await client.delete_messages(message.chat.id, msg_id)
+                deleted += 1
+            except:
+                pass
 
-    await delete_range(client, message.chat.id, start, end)
+    # CASE 2: normal purge
+    else:
+        start_id = message.reply_to_message.id
+        end_id = message.id
 
-    await message.reply("✅ ᴘᴜʀɢᴇᴅ")
+        for msg_id in range(start_id, end_id + 1):
+            try:
+                await client.delete_messages(message.chat.id, msg_id)
+                deleted += 1
+            except:
+                pass
+
+    end_time = time.time()
+    taken = round(end_time - start_time, 2)
+
+    # confirmation (auto delete)
+    m = await message.reply(
+        f"🧹 ᴘᴜʀɢᴇᴅ {deleted} ᴍᴇssᴀɢᴇs\n⏱️ ᴛɪᴍᴇ ᴛᴀᴋᴇɴ: {taken}s"
+    )
+    await asyncio.sleep(2)
+    await m.delete()
 
 
 # ================== SILENT PURGE ==================
 @app.on_message(filters.command("spurge") & filters.group)
 async def spurge(client, message: Message):
-
     if not await is_admin(client, message.chat.id, message.from_user.id):
         return
 
     if not message.reply_to_message:
         return
 
-    start = message.reply_to_message.id
-    end = message.id
+    if len(message.command) > 1 and message.command[1].isdigit():
+        count = int(message.command[1])
+        start_id = message.reply_to_message.id
 
-    await delete_range(client, message.chat.id, start, end)
+        for msg_id in range(start_id, start_id + count):
+            try:
+                await client.delete_messages(message.chat.id, msg_id)
+            except:
+                pass
+    else:
+        start_id = message.reply_to_message.id
+        end_id = message.id
 
-    try:
-        await message.delete()
-    except:
-        pass
+        for msg_id in range(start_id, end_id + 1):
+            try:
+                await client.delete_messages(message.chat.id, msg_id)
+            except:
+                pass
 
 
 # ================== DELETE SINGLE ==================
 @app.on_message(filters.command("del") & filters.group)
 async def delete_msg(client, message: Message):
-
     if not await is_admin(client, message.chat.id, message.from_user.id):
-        return await message.reply("❌ ᴀᴅᴍɪɴs ᴏɴʟʏ")
+        return
 
-    if not message.reply_to_message:
-        return await message.reply("⚠️ ʀᴇᴘʟʏ ᴛᴏ ᴍᴇssᴀɢᴇ")
-
-    try:
-        await message.reply_to_message.delete()
-        await message.delete()
-    except:
-        await message.reply("❌ ғᴀɪʟᴇᴅ")
-
-
-# ================== PURGE FROM ==================
-@app.on_message(filters.command("purgefrom") & filters.group)
-async def purgefrom(client, message: Message):
-
-    if not await is_admin(client, message.chat.id, message.from_user.id):
-        return await message.reply("❌ ᴀᴅᴍɪɴs ᴏɴʟʏ")
-
-    if not message.reply_to_message:
-        return await message.reply("⚠️ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ")
-
-    purge_db.update_one(
-        {"chat_id": message.chat.id},
-        {"$set": {"from": message.reply_to_message.id}},
-        upsert=True
-    )
-
-    await message.reply("✅ sᴛᴀʀᴛ ᴘᴏɪɴᴛ sᴇᴛ")
-
-
-# ================== PURGE TO ==================
-@app.on_message(filters.command("purgeto") & filters.group)
-async def purgeto(client, message: Message):
-
-    if not await is_admin(client, message.chat.id, message.from_user.id):
-        return await message.reply("❌ ᴀᴅᴍɪɴs ᴏɴʟʏ")
-
-    if not message.reply_to_message:
-        return await message.reply("⚠️ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ")
-
-    data = purge_db.find_one({"chat_id": message.chat.id})
-
-    if not data or "from" not in data:
-        return await message.reply("❌ ᴜsᴇ /purgefrom ғɪʀsᴛ")
-
-    start = data["from"]
-    end = message.reply_to_message.id
-
-    await delete_range(client, message.chat.id, start, end)
-
-    purge_db.delete_one({"chat_id": message.chat.id})
-
-    await message.reply("✅ ᴘᴜʀɢᴇᴅ")
+    if message.reply_to_message:
+        try:
+            await message.reply_to_message.delete()
+            await message.delete()
+        except:
+            pass
