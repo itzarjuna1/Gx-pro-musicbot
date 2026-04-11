@@ -1,14 +1,7 @@
-# ================== STRING SESSION GENERATOR ==================
-
 import asyncio
 from pyrogram import filters
-from pyrogram.types import (
-    Message,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton
-)
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
-# ✅ SAFE IMPORT (no crash even if unsupported)
 try:
     from pyrogram.enums import ButtonStyle
     SUPPORT_STYLE = True
@@ -16,7 +9,6 @@ except:
     SUPPORT_STYLE = False
 
 from pyrogram.errors import SessionPasswordNeeded
-
 from pyrogram import Client as PyroClient
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
@@ -24,12 +16,10 @@ from telethon.sessions import StringSession
 from EsproMusic import app
 from config import API_ID, API_HASH
 
-
-PRIVACY_LINK = "https://telegra.ph/Your-Privacy-Policy-Her"
+PRIVACY_LINK = "https://telegra.ph/Your-Privacy-Policy-Here"
 
 users = {}
 
-# 
 def btn(text, **kwargs):
     if SUPPORT_STYLE and "style" in kwargs:
         style = kwargs.pop("style")
@@ -38,11 +28,9 @@ def btn(text, **kwargs):
 
 @app.on_message(filters.command("gensession") & filters.group)
 async def group_redirect(client, message: Message):
-
     bot_username = (await client.get_me()).username
-
     await message.reply(
-        "⚠️ ᴘʟᴇᴀsᴇ ᴜsᴇ ᴛʜɪs ɪɴ ᴘʀɪᴠᴀᴛᴇ",
+        "⚠️ ᴘʟᴇᴀsᴇ ᴜsᴇ ɪɴ ᴅᴍ",
         reply_markup=InlineKeyboardMarkup([
             [
                 btn(
@@ -56,34 +44,24 @@ async def group_redirect(client, message: Message):
 
 @app.on_message(filters.command("gensession") & filters.private)
 async def start_dm(client, message: Message):
-
     await message.reply(
-        "╭─〔 ⚙️ sᴇssɪᴏɴ ɢᴇɴᴇʀᴀᴛᴏʀ 〕─╮\n"
-        "│ ✦ sᴇʟᴇᴄᴛ sᴇssɪᴏɴ ᴛʏᴘᴇ\n"
-        "│ ✦ ᴋᴇᴇᴘ ɪᴛ sᴇᴄʀᴇᴛ\n"
-        "╰────────────────╯",
+        "╭─〔 ⚙️ sᴇssɪᴏɴ ɢᴇɴᴇʀᴀᴛᴏʀ 〕─╮\n│ ✦ sᴇʟᴇᴄᴛ sᴇssɪᴏɴ ᴛʏᴘᴇ\n│ ✦ ᴋᴇᴇᴘ ɪᴛ sᴇᴄʀᴇᴛ\n╰────────────────╯",
         reply_markup=InlineKeyboardMarkup([
             [
-                btn("🐍 ᴘʏʀᴏɢʀᴀᴍ", callback_data="pyro",
-                    style=ButtonStyle.SUCCESS if SUPPORT_STYLE else None),
-                btn("📡 ᴛᴇʟᴇᴛʜᴏɴ", callback_data="tele",
-                    style=ButtonStyle.PRIMARY if SUPPORT_STYLE else None)
+                btn("🐍 ᴘʏʀᴏɢʀᴀᴍ", callback_data="pyro", style=ButtonStyle.SUCCESS if SUPPORT_STYLE else None),
+                btn("📡 ᴛᴇʟᴇᴛʜᴏɴ", callback_data="tele", style=ButtonStyle.PRIMARY if SUPPORT_STYLE else None)
             ],
             [
-                btn("🔐 ᴘʀɪᴠᴀᴄʏ", url=PRIVACY_LINK,
-                    style=ButtonStyle.SUCCESS if SUPPORT_STYLE else None)
+                btn("🔐 ᴘʀɪᴠᴀᴄʏ", url=PRIVACY_LINK, style=ButtonStyle.SUCCESS if SUPPORT_STYLE else None)
             ],
             [
-                btn("❌ ᴄʟᴏsᴇ", callback_data="close",
-                    style=ButtonStyle.DANGER if SUPPORT_STYLE else None)
+                btn("❌ ᴄʟᴏsᴇ", callback_data="close", style=ButtonStyle.DANGER if SUPPORT_STYLE else None)
             ]
         ])
     )
 
-# fixed 
-@app.on_callback_query()
+@app.on_callback_query(filters.regex("^(pyro|tele|close)$"))
 async def callbacks(client, query):
-
     user_id = query.from_user.id
 
     if query.data == "close":
@@ -91,14 +69,10 @@ async def callbacks(client, query):
 
     if query.data in ["pyro", "tele"]:
         users[user_id] = {"type": query.data}
-        await query.message.reply(
-            "📱 sᴇɴᴅ ʏᴏᴜʀ ᴘʜᴏɴᴇ ɴᴜᴍʙᴇʀ\n\n"
-            "ᴇxᴀᴍᴘʟᴇ: +911234567890"
-         )
-      
-@app.on_message(filters.private & filters.text)
-async def session_flow(client, message: Message):
+        await query.message.reply("📱 sᴇɴᴅ ᴘʜᴏɴᴇ ɴᴜᴍʙᴇʀ\n\nᴇxᴀᴍᴘʟᴇ: +911234567890")
 
+@app.on_message(filters.private & filters.text & ~filters.command(["gensession"]))
+async def session_flow(client, message: Message):
     user_id = message.from_user.id
 
     if user_id not in users:
@@ -106,28 +80,18 @@ async def session_flow(client, message: Message):
 
     data = users[user_id]
 
-
     if "phone" not in data:
         data["phone"] = message.text
 
         try:
             if data["type"] == "pyro":
-                client_ = PyroClient(
-                    f"user_{user_id}",
-                    api_id=API_ID,
-                    api_hash=API_HASH
-                )
+                client_ = PyroClient(f"user_{user_id}", api_id=API_ID, api_hash=API_HASH)
                 await client_.connect()
                 sent = await client_.send_code(data["phone"])
                 data["client"] = client_
                 data["hash"] = sent.phone_code_hash
-
             else:
-                client_ = TelegramClient(
-                    StringSession(),
-                    API_ID,
-                    API_HASH
-                )
+                client_ = TelegramClient(StringSession(), API_ID, API_HASH)
                 await client_.connect()
                 sent = await client_.send_code_request(data["phone"])
                 data["client"] = client_
@@ -144,16 +108,9 @@ async def session_flow(client, message: Message):
 
         try:
             if data["type"] == "pyro":
-                await data["client"].sign_in(
-                    data["phone"],
-                    data["hash"],
-                    data["otp"]
-                )
+                await data["client"].sign_in(data["phone"], data["hash"], data["otp"])
             else:
-                await data["client"].sign_in(
-                    data["phone"],
-                    data["otp"]
-                )
+                await data["client"].sign_in(data["phone"], data["otp"])
 
             try:
                 string = await data["client"].export_session_string()
