@@ -1,3 +1,4 @@
+#file errors fixed via costum ai
 # ================== ROSE STYLE RULES SYSTEM (FINAL FIXED) ==================
 
 from pyrogram import filters
