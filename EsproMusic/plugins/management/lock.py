@@ -97,11 +97,11 @@ def build_panel(chat_id, page=0):
     nav = []
     if page > 0:
         nav.append(
-            InlineKeyboardButton("⏮ ʙᴀᴄᴋ", callback_data=f"page_{page-1}", style=ButtonStyle.SECONDARY)
+            InlineKeyboardButton("⏮ ʙᴀᴄᴋ", callback_data=f"page_{page-1}", style=ButtonStyle.SUCCESS)
         )
     if end < len(LOCK_LIST):
         nav.append(
-            InlineKeyboardButton("ɴᴇxᴛ ⏭", callback_data=f"page_{page+1}", style=ButtonStyle.SECONDARY)
+            InlineKeyboardButton("ɴᴇxᴛ ⏭", callback_data=f"page_{page+1}", style=ButtonStyle.SUCCESS)
         )
 
     if nav:
@@ -210,7 +210,7 @@ async def callbacks(client, query):
                     InlineKeyboardButton(
                         "💗 ʙᴀᴄᴋ",
                         callback_data=f"page_{page}",
-                        style=ButtonStyle.SECONDARY
+                        style=ButtonStyle.SUCCESS
                     )
                 ]
             ])
@@ -234,7 +234,7 @@ async def callbacks(client, query):
                     InlineKeyboardButton(
                         "💗 ʙᴀᴄᴋ",
                         callback_data=f"page_{page}",
-                        style=ButtonStyle.SECONDARY
+                        style=ButtonStyle.SUCCESS
                     )
                 ]
             ])
