@@ -1,3 +1,5 @@
+#file written by @itzarjuna01 © some errors spotted were fixed via ai 
+#any marks of ai should be considered as ai fixes 
 from datetime import datetime
 from functools import wraps
 from pyrogram import filters
