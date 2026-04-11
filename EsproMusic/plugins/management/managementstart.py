@@ -38,8 +38,8 @@ def mstart_buttons():
     return InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("💬 sᴜᴘᴘᴏʀᴛ", url=SUPPORT_GROUP), style=ButtonStyle.PRIMARY
-                InlineKeyboardButton("📢 ᴄʜᴀɴɴᴇʟ", url=SUPPORT_CHANNEL), style=ButtonStyle.SUCCESS
+                InlineKeyboardButton("💬 sᴜᴘᴘᴏʀᴛ", url=SUPPORT_GROUP, style=ButtonStyle.PRIMARY)
+                InlineKeyboardButton("📢 ᴄʜᴀɴɴᴇʟ", url=SUPPORT_CHANNEL, style=ButtonStyle.SUCCESS)
             ],
             [
                 InlineKeyboardButton("❌ ᴄʟᴏsᴇ", callback_data="close_mstart", style=ButtonStyle.DANGER)
