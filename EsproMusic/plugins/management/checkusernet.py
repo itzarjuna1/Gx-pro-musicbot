@@ -1,5 +1,4 @@
-# ================== USER NETWORK CHECK (SIMULATED) ==================
-
+#remember file written by me but errors fixed via personal ai
 import time
 import asyncio
 
@@ -8,8 +7,6 @@ from pyrogram.types import Message
 
 from EsproMusic import app
 
-
-# ================== COMMAND ==================
 @app.on_message(filters.command("checkmynet"))
 async def check_net(client, message: Message):
 
@@ -23,7 +20,6 @@ async def check_net(client, message: Message):
     end = time.time()
     latency = round((end - start) * 1000)
 
-    # ===== CLASSIFY =====
     if latency < 600:
         status = "🟢 ᴇxᴄᴇʟʟᴇɴᴛ"
     elif latency < 1200:
