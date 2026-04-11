@@ -10,13 +10,11 @@ from EsproMusic import app
 from config import MONGO_DB_URI
 
 
-# ================== DB ==================
 mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 filters_db = db["filters"]
 
 
-# ================== DB ==================
 def add_filter(chat_id, trigger, data):
     filters_db.update_one(
         {"chat_id": chat_id, "trigger": trigger},
@@ -52,7 +50,7 @@ async def is_admin(client, message: Message):
         return False
 
 
-# ================== ADD FILTER ==================
+
 @app.on_message(filters.command("filter") & filters.group)
 async def addfilter(client, message: Message):
 
@@ -63,8 +61,7 @@ async def addfilter(client, message: Message):
         return await message.reply_text("ᴜsᴀɢᴇ:\n/filter <ᴛʀɪɢɢᴇʀ>")
 
     trigger = message.command[1].lower()
-
-    # ===== REPLY MODE =====
+    
     if message.reply_to_message:
 
         reply = message.reply_to_message
@@ -95,7 +92,6 @@ async def addfilter(client, message: Message):
 
         return await message.reply_text(f"✅ ғɪʟᴛᴇʀ sᴀᴠᴇᴅ: `{trigger}`")
 
-    # ===== TEXT MODE =====
     if len(message.command) < 3:
         return await message.reply_text("ʀᴇᴘʟʏ ᴛᴏ ᴍᴇᴅɪᴀ ᴏʀ ɢɪᴠᴇ ᴛᴇxᴛ")
 
@@ -109,7 +105,6 @@ async def addfilter(client, message: Message):
     await message.reply_text(f"✅ ғɪʟᴛᴇʀ ᴀᴅᴅᴇᴅ: `{trigger}`")
 
 
-# ================== LIST ==================
 @app.on_message(filters.command("filters") & filters.group)
 async def listfilters(client, message: Message):
 
@@ -128,7 +123,6 @@ async def listfilters(client, message: Message):
     await message.reply_text(text)
 
 
-# ================== REMOVE ==================
 @app.on_message(filters.command("stop") & filters.group)
 async def stopfilter(client, message: Message):
 
@@ -145,7 +139,6 @@ async def stopfilter(client, message: Message):
     await message.reply_text(f"❌ ʀᴇᴍᴏᴠᴇᴅ: `{trigger}`")
 
 
-# ================== REMOVE ALL ==================
 @app.on_message(filters.command("stopall") & filters.group)
 async def stopall(client, message: Message):
 
@@ -157,7 +150,6 @@ async def stopall(client, message: Message):
     await message.reply_text("🚫 ᴀʟʟ ғɪʟᴛᴇʀs ʀᴇᴍᴏᴠᴇᴅ")
 
 
-# ================== TRIGGER ==================
 @app.on_message(filters.group, group=2)
 async def filter_reply(client, message: Message):
 
