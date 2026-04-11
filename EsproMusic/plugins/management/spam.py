@@ -1,4 +1,6 @@
-# ================== SPAM SYSTEM ==================
+#dump fixes by ai
+#file written by @itzarjuna01 © some errors spotted were fixed via ai 
+#any marks of ai should be considered as ai fixes 
 
 import asyncio
 from pyrogram import filters
@@ -7,11 +9,8 @@ from pyrogram.types import Message
 from EsproMusic import app
 from config import OWNER_ID
 
-# ================== STATE ==================
 SPAM_TASKS = {}
 
-
-# ================== SPAM ==================
 @app.on_message(filters.command("spam") & filters.group)
 async def spam_cmd(client, message: Message):
 
@@ -36,7 +35,6 @@ async def spam_cmd(client, message: Message):
     delay = 1 / speed
     chat_id = message.chat.id
 
-    # stop old spam if exists
     if chat_id in SPAM_TASKS:
         SPAM_TASKS[chat_id].cancel()
 
@@ -56,9 +54,7 @@ async def spam_cmd(client, message: Message):
         f"• ᴄᴏᴜɴᴛ: {count}\n"
         f"• sᴘᴇᴇᴅ: {speed} msg/sec"
     )
-
-
-# ================== STOP ==================
+    
 @app.on_message(filters.command("stopspam") & filters.group)
 async def stop_spam(client, message: Message):
 
