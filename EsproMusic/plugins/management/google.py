@@ -1,5 +1,3 @@
-# ================== GOOGLE SEARCH SYSTEM (FIXED) ==================
-
 import aiohttp
 from bs4 import BeautifulSoup
 from pyrogram import filters
@@ -8,7 +6,6 @@ from pyrogram.types import Message
 from EsproMusic import app
 
 
-# ================== SEARCH FUNCTION ==================
 async def search_web(query):
     url = f"https://html.duckduckgo.com/html/?q={query}"
 
@@ -35,8 +32,6 @@ async def search_web(query):
 
     return "\n\n".join(results)
 
-
-# ================== COMMAND ==================
 @app.on_message(filters.command("google") & filters.group)
 async def google_search(client, message: Message):
     if len(message.command) < 2:
