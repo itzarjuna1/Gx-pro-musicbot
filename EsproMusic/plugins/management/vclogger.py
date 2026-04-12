@@ -4,6 +4,8 @@ from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ChatMemberStatus, ButtonStyle
 from pymongo import MongoClient
+from pytgcalls import PyTgCalls
+from pytgcalls.types import Update
 
 from EsproMusic import app
 from config import MONGO_DB_URI
@@ -12,6 +14,12 @@ mongo = MongoClient(MONGO_DB_URI)
 db = mongo["musicbot"]
 vc_db = db["vclogger"]
 stats_db = db["vcstats"]
+speak_db = db["vcspeak"]
+
+vc = PyTgCalls(app)
+
+active_calls = {}
+user_activity = {}
 
 
 def now():
@@ -28,9 +36,7 @@ async def is_admin(client, chat_id, user_id):
 
 def get_cfg(chat_id):
     d = vc_db.find_one({"chat_id": chat_id})
-    if not d:
-        return {"time": 5, "auto": True}
-    return d
+    return d if d else {"time": 5, "auto": True}
 
 
 def set_time(chat_id, t):
@@ -41,7 +47,7 @@ def set_auto(chat_id, v):
     vc_db.update_one({"chat_id": chat_id}, {"$set": {"auto": v}}, upsert=True)
 
 
-def add_stat(chat_id, user_id):
+def add_join(chat_id, user_id):
     stats_db.update_one(
         {"chat_id": chat_id, "user_id": user_id},
         {"$inc": {"joins": 1}},
@@ -49,12 +55,20 @@ def add_stat(chat_id, user_id):
     )
 
 
-def get_top(chat_id):
-    return list(
-        stats_db.find({"chat_id": chat_id})
-        .sort("joins", -1)
-        .limit(5)
+def add_speak(chat_id, user_id):
+    speak_db.update_one(
+        {"chat_id": chat_id, "user_id": user_id},
+        {"$inc": {"speak": 1}},
+        upsert=True
     )
+
+
+def top_join(chat_id):
+    return list(stats_db.find({"chat_id": chat_id}).sort("joins", -1).limit(5))
+
+
+def top_speak(chat_id):
+    return list(speak_db.find({"chat_id": chat_id}).sort("speak", -1).limit(5))
 
 
 @app.on_message(filters.command("vclog") & filters.group)
@@ -63,125 +77,161 @@ async def panel(client, message: Message):
 
     txt = (
         "🎙️ ᴠᴄ ᴄᴏɴᴛʀᴏʟ\n\n"
-        f"⏱ ᴅᴇʟᴇᴛᴇ: {cfg.get('time',5)}s\n"
-        f"⚙️ ᴀᴜᴛᴏ: {'ᴏɴ' if cfg.get('auto',True) else 'ᴏғғ'}"
+        f"⏱ {cfg.get('time',5)}s\n"
+        f"⚙️ {'ᴏɴ' if cfg.get('auto',True) else 'ᴏғғ'}"
     )
 
     btn = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("⏱ ᴛɪᴍᴇ", callback_data="vctime", style=ButtonStyle.PRIMARY),
-            InlineKeyboardButton("⚙️ ᴛᴏɢɢʟᴇ", callback_data="vctoggle", style=ButtonStyle.SUCCESS)
+            InlineKeyboardButton("⏱", callback_data="vctime", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton("⚙️", callback_data="vctoggle", style=ButtonStyle.SUCCESS)
         ],
         [
-            InlineKeyboardButton("👑 ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ", callback_data="vcleader", style=ButtonStyle.PRIMARY)
+            InlineKeyboardButton("👑 joins", callback_data="vcleader", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton("🎤 speak", callback_data="vcspeak", style=ButtonStyle.SUCCESS)
         ],
         [
-            InlineKeyboardButton("🧠 ɪɴsɪɢʜᴛ", callback_data="vcai", style=ButtonStyle.DANGER)
+            InlineKeyboardButton("📊 graph", callback_data="vcgraph", style=ButtonStyle.DANGER)
         ]
     ])
 
     await message.reply(txt, reply_markup=btn)
 
 
-@app.on_callback_query(filters.regex("^vctime$"))
-async def time_menu(client, q):
-    kb = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("5s", callback_data="set_5", style=ButtonStyle.PRIMARY),
-            InlineKeyboardButton("10s", callback_data="set_10", style=ButtonStyle.SUCCESS),
-            InlineKeyboardButton("20s", callback_data="set_20", style=ButtonStyle.DANGER)
-        ]
-    ])
-    await q.message.reply("⏱ sᴇʟᴇᴄᴛ ᴛɪᴍᴇ", reply_markup=kb)
+@app.on_callback_query(filters.regex("^vc"))
+async def cb(client, q):
+
+    cid = q.message.chat.id
+
+    if q.data == "vctime":
+        kb = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("5", callback_data="set_5", style=ButtonStyle.PRIMARY),
+                InlineKeyboardButton("10", callback_data="set_10", style=ButtonStyle.SUCCESS),
+                InlineKeyboardButton("20", callback_data="set_20", style=ButtonStyle.DANGER)
+            ]
+        ])
+        await q.message.reply("⏱ time", reply_markup=kb)
+        return await q.answer()
+
+    if q.data.startswith("set_"):
+        set_time(cid, int(q.data.split("_")[1]))
+        return await q.answer("done")
+
+    if q.data == "vctoggle":
+        cfg = get_cfg(cid)
+        new = not cfg.get("auto", True)
+        set_auto(cid, new)
+        return await q.answer("on" if new else "off")
+
+    if q.data == "vcleader":
+        data = top_join(cid)
+        if not data:
+            return await q.answer("no data", show_alert=True)
+
+        txt = "👑 joins\n\n"
+        for i, d in enumerate(data, 1):
+            txt += f"{i}. {d['user_id']} → {d.get('joins',0)}\n"
+
+        await q.message.reply(txt)
+        return await q.answer()
+
+    if q.data == "vcspeak":
+        data = top_speak(cid)
+        if not data:
+            return await q.answer("no data", show_alert=True)
+
+        txt = "🎤 speaking\n\n"
+        for i, d in enumerate(data, 1):
+            txt += f"{i}. {d['user_id']} → {d.get('speak',0)}\n"
+
+        await q.message.reply(txt)
+        return await q.answer()
+
+    if q.data == "vcgraph":
+        data = top_speak(cid)
+        if not data:
+            return await q.answer("no data", show_alert=True)
+
+        txt = "📊 activity\n\n"
+        for d in data:
+            bars = "█" * min(10, d.get("speak", 0))
+            txt += f"{d['user_id']} {bars}\n"
+
+        await q.message.reply(txt)
+        return await q.answer()
 
 
-@app.on_callback_query(filters.regex("^set_"))
-async def set_time_cb(client, q):
-    t = int(q.data.split("_")[1])
-    set_time(q.message.chat.id, t)
-    await q.answer("ᴜᴘᴅᴀᴛᴇᴅ")
+@app.on_message(filters.command("vcmembers") & filters.group)
+async def members(client, message: Message):
+    cid = message.chat.id
+
+    if cid not in active_calls or not active_calls[cid]:
+        return await message.reply("❌ no active vc")
+
+    txt = "🎧 vc members\n\n"
+
+    for uid in active_calls[cid]:
+        try:
+            user = await app.get_users(uid)
+            txt += f"• {user.first_name}\n"
+        except:
+            txt += f"• {uid}\n"
+
+    await message.reply(txt)
 
 
-@app.on_callback_query(filters.regex("^vctoggle$"))
-async def toggle_cb(client, q):
-    cfg = get_cfg(q.message.chat.id)
-    new = not cfg.get("auto", True)
-    set_auto(q.message.chat.id, new)
-    await q.answer("ᴏɴ" if new else "ᴏғғ")
+@vc.on_update()
+async def vc_events(_, update: Update):
+
+    if update.__class__.__name__ != "UpdateGroupCallParticipants":
+        return
+
+    cid = update.call.chat_id
+    participants = update.participants
+
+    if cid not in active_calls:
+        active_calls[cid] = set()
+
+    old = active_calls[cid]
+    new = set()
+
+    for p in participants:
+        if not p.user_id:
+            continue
+
+        new.add(p.user_id)
+
+        if getattr(p, "action", None) == "speaking":
+            add_speak(cid, p.user_id)
+
+    joined = new - old
+    left = old - new
+
+    active_calls[cid] = new
+
+    for uid in joined:
+        try:
+            user = await app.get_users(uid)
+            add_join(cid, uid)
+            msg = await app.send_message(cid, f"➕ {user.first_name}")
+            await asyncio.sleep(5)
+            await msg.delete()
+        except:
+            pass
+
+    for uid in left:
+        try:
+            user = await app.get_users(uid)
+            msg = await app.send_message(cid, f"➖ {user.first_name}")
+            await asyncio.sleep(5)
+            await msg.delete()
+        except:
+            pass
 
 
-@app.on_callback_query(filters.regex("^vcleader$"))
-async def leader(client, q):
-    data = get_top(q.message.chat.id)
-
-    if not data:
-        return await q.answer("ɴᴏ ᴅᴀᴛᴀ", show_alert=True)
-
-    text = "👑 ᴠᴄ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ\n\n"
-
-    for i, d in enumerate(data, 1):
-        text += f"{i}. {d['user_id']} → {d.get('joins',0)}\n"
-
-    await q.message.reply(text)
+async def start_vc():
+    await vc.start()
 
 
-@app.on_callback_query(filters.regex("^vcai$"))
-async def ai(client, q):
-    data = get_top(q.message.chat.id)
-
-    if not data:
-        return await q.answer("ɴᴏ ᴅᴀᴛᴀ", show_alert=True)
-
-    top = data[0]
-
-    text = (
-        "🧠 ᴠᴄ ɪɴsɪɢʜᴛ\n\n"
-        f"👑 ᴍᴏsᴛ ᴀᴄᴛɪᴠᴇ: {top['user_id']}\n"
-        f"📊 ᴊᴏɪɴs: {top.get('joins',0)}\n\n"
-        "🎤 ᴀᴄᴛɪᴠɪᴛʏ: ʜɪɢʜ\n"
-        "📶 ᴇɴɢᴀɢᴇᴍᴇɴᴛ: sᴛᴀʙʟᴇ"
-    )
-
-    await q.message.reply(text)
-
-
-@app.on_message(filters.group & filters.service)
-async def logger(client, message: Message):
-
-    try:
-        cfg = get_cfg(message.chat.id)
-
-        txt = None
-        delete = False
-
-        if message.video_chat_started:
-            txt = f"🎙️ ᴠᴄ sᴛᴀʀᴛᴇᴅ\n⏰ {now()}"
-
-        elif message.video_chat_ended:
-            txt = f"🔴 ᴠᴄ ᴇɴᴅᴇᴅ\n⏰ {now()}"
-
-        elif message.new_chat_members:
-            u = message.new_chat_members[0]
-            txt = f"➕ {u.first_name} ᴊᴏɪɴᴇᴅ"
-            delete = True
-            add_stat(message.chat.id, u.id)
-
-        elif message.left_chat_member:
-            u = message.left_chat_member
-            txt = f"➖ {u.first_name} ʟᴇғᴛ"
-            delete = True
-
-        if not txt:
-            return
-
-        m = await message.reply(txt)
-
-        if delete and cfg.get("auto", True):
-            await asyncio.sleep(cfg.get("time", 5))
-            try:
-                await m.delete()
-            except:
-                pass
-
-    except:
-        pass
+asyncio.create_task(start_vc())
