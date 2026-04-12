@@ -6,7 +6,8 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ChatMemberStatus, ButtonStyle
 from pymongo import MongoClient
 
-from EsproMusic import app, userbot
+from EsproMusic import app
+from EsproMusic.core.userbot import userbot
 from config import MONGO_DB_URI
 
 mongo = MongoClient(MONGO_DB_URI)
