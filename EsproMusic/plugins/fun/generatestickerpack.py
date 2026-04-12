@@ -5,7 +5,6 @@ import string
 
 from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from pyrogram.enums import ButtonStyle
 from PIL import Image, ImageFilter
 
 from EsproMusic import app
@@ -74,8 +73,8 @@ async def generate(_, m: Message):
 
     kb = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("ʏᴇs", callback_data=f"gen_yes_{m.from_user.id}", style=ButtonStyle.SUCCESS),
-            InlineKeyboardButton("ɴᴏ", callback_data=f"gen_no_{m.from_user.id}", style=ButtonStyle.DANGER)
+            InlineKeyboardButton("ʏᴇs", callback_data=f"gen_yes_{m.from_user.id}"),
+            InlineKeyboardButton("ɴᴏ", callback_data=f"gen_no_{m.from_user.id}")
         ]
     ])
 
