@@ -101,7 +101,7 @@ async def rules_cmd(client, message: Message):
         await message.reply(text)
 
 # ================== START HANDLER (DM RULES) ==================
-@app.on_message(filters.command("start") & filters.private)
+@app.on_message(filters.command("rulesetstart") & filters.private)
 async def start_handler(client, message: Message):
 
     if len(message.command) > 1:
@@ -117,7 +117,7 @@ async def start_handler(client, message: Message):
             text = data_db["rules"].replace("{rules}", "").strip()
 
             return await message.reply(
-                f"📜 **ʀᴜʟᴇs ғᴏʀ ᴄʜᴀᴛ {chat_id}**\n\n{text}"
+                f"📜 **ʀᴜʟᴇs ғᴏʀ ᴄʜᴀᴛ {chat_name}\n\n{text}"
             )
 
     await message.reply("✨ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ!")
