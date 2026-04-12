@@ -1,3 +1,4 @@
+
 import os
 import random
 import string
@@ -73,31 +74,39 @@ async def generate(_, m: Message):
 
     kb = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("ʏᴇs", callback_data="confirm_yes", style=ButtonStyle.SUCCESS),
-            InlineKeyboardButton("ɴᴏ", callback_data="confirm_no", style=ButtonStyle.DANGER)
+            InlineKeyboardButton("ʏᴇs", callback_data=f"gen_yes_{m.from_user.id}", style=ButtonStyle.SUCCESS),
+            InlineKeyboardButton("ɴᴏ", callback_data=f"gen_no_{m.from_user.id}", style=ButtonStyle.DANGER)
         ]
     ])
 
     await m.reply("ᴄᴏɴғɪʀᴍ ɢᴇɴᴇʀᴀᴛɪᴏɴ?", reply_markup=kb)
 
 
-@app.on_callback_query()
+@app.on_callback_query(filters.regex("^gen_"))
 async def confirm(_, q: CallbackQuery):
 
-    user = q.from_user.id
+    data = q.data.split("_")
+    action = data[1]
+    uid = int(data[2])
 
-    if user not in pending:
-        return await q.answer("ᴇxᴘɪʀᴇᴅ", True)
+    if q.from_user.id != uid:
+        return await q.answer("ɴᴏᴛ ғᴏʀ ʏᴏᴜ", show_alert=True)
 
-    if q.data == "confirm_no":
-        pending.pop(user, None)
+    if uid not in pending:
+        return await q.answer("ᴇxᴘɪʀᴇᴅ", show_alert=True)
+
+    await q.answer()
+
+    if action == "no":
+        pending.pop(uid, None)
         return await q.message.edit("ᴄᴀɴᴄᴇʟʟᴇᴅ")
 
-    data = pending.pop(user)
+    data = pending.pop(uid)
+
+    msg = await app.get_messages(data["chat"], data["msg_id"])
     mode = data["mode"]
     emoji = data["emoji"]
 
-    msg = await app.get_messages(data["chat"], data["msg_id"])
 
     if mode == "sticker":
 
@@ -112,6 +121,7 @@ async def confirm(_, q: CallbackQuery):
         await q.message.reply_sticker(webp)
 
         os.remove(file)
+        os.remove(webp)
 
 
     elif mode == "stickerpack":
