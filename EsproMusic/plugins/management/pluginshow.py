@@ -1,7 +1,7 @@
 import os
 
 from pyrogram import filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from pyrogram.types import Message
 
 from EsproMusic import app
 from config import OWNER_ID
@@ -17,27 +17,7 @@ def is_owner(uid):
 
 
 def fmt(x):
-    return x.replace("_", " ").title()
-
-
-def get_folders():
-    return [
-        f for f in os.listdir(BASE)
-        if os.path.isdir(os.path.join(BASE, f))
-    ]
-
-
-def get_files(folder):
-    path = os.path.join(BASE, folder)
-
-    if not os.path.exists(path):
-        return []
-
-    return [
-        f.replace(".py", "")
-        for f in os.listdir(path)
-        if f.endswith(".py") and not f.startswith("_")
-    ]
+    return x.replace("_", " ").lower()
 
 
 @app.on_message(filters.command("plugins"))
@@ -46,83 +26,36 @@ async def plugins(_, m: Message):
     if not is_owner(m.from_user.id):
         return
 
-    folders = get_folders()
+    if not os.path.exists(BASE):
+        return await m.reply("ɴᴏ ᴘʟᴜɢɪɴs ғᴏᴜɴᴅ")
 
-    if not folders:
-        return await m.reply("ɴᴏ ᴘʟᴜɢɪɴs")
+    text = "✦ ᴘʟᴜɢɪɴ ʟɪsᴛ ✦\n\n"
 
-    buttons = [
-        [InlineKeyboardButton(fmt(f), callback_data=f"plug|{f}")]
-        for f in folders
-    ]
+    folders = sorted(os.listdir(BASE))
 
-    buttons.append([
-        InlineKeyboardButton("❌ ᴄʟᴏsᴇ", callback_data="plug|close")
-    ])
+    for folder in folders:
 
-    await m.reply(
-        "✦ ᴘʟᴜɢɪɴ ᴘᴀɴᴇʟ ✦\n\nsᴇʟᴇᴄᴛ ᴀ ᴄᴀᴛᴇɢᴏʀʏ",
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
+        path = os.path.join(BASE, folder)
 
+        if not os.path.isdir(path):
+            continue
 
-@app.on_callback_query(filters.regex("^plug\\|"))
-async def panel(_, q: CallbackQuery):
-
-    if not is_owner(q.from_user.id):
-        return await q.answer("ɴᴏᴛ ғᴏʀ ʏᴏᴜ", True)
-
-    await q.answer()
-
-    data = q.data.split("|")[1]
-
-    if data == "close":
-        return await q.message.delete()
-
-    if data == "back":
-
-        folders = get_folders()
-
-        buttons = [
-            [InlineKeyboardButton(fmt(f), callback_data=f"plug|{f}")]
-            for f in folders
+        files = [
+            f for f in os.listdir(path)
+            if f.endswith(".py") and not f.startswith("_")
         ]
 
-        buttons.append([
-            InlineKeyboardButton("❌ ᴄʟᴏsᴇ", callback_data="plug|close")
-        ])
+        if not files:
+            continue
 
-        return await q.message.edit(
-            "✦ ᴘʟᴜɢɪɴ ᴘᴀɴᴇʟ ✦\n\nsᴇʟᴇᴄᴛ ᴀ ᴄᴀᴛᴇɢᴏʀʏ",
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
+        text += f"❖ {fmt(folder)}\n"
 
-    files = get_files(data)
+        for f in sorted(files):
+            name = f.replace(".py", "")
+            text += f"   • {fmt(name)}\n"
 
-    if not files:
-        return await q.message.edit(
-            f"❖ {fmt(data)}\n\nɴᴏ ғɪʟᴇs ғᴏᴜɴᴅ",
-            reply_markup=InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton("⬅️ ʙᴀᴄᴋ", callback_data="plug|back"),
-                    InlineKeyboardButton("❌ ᴄʟᴏsᴇ", callback_data="plug|close")
-                ]
-            ])
-        )
+        text += "\n"
 
-    text = f"❖ {fmt(data)}\n\n"
+    text += "— powered by @theinfinitynetwork"
 
-    for f in sorted(files):
-        text += f"• {fmt(f)}\n"
-
-    kb = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("⬅️ ʙᴀᴄᴋ", callback_data="plug|back"),
-            InlineKeyboardButton("❌ ᴄʟᴏsᴇ", callback_data="plug|close")
-        ]
-    ])
-
-    await q.message.edit(
-        text + "\n— powered by @theinfinitynetwork",
-        reply_markup=kb
-    )
+    await m.reply(text)
