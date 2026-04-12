@@ -7,7 +7,7 @@ from pymongo import MongoClient
 from pytgcalls import PyTgCalls
 from pytgcalls.types import Update
 
-from EsproMusic import app
+from EsproMusic import app, userbot
 from config import MONGO_DB_URI
 
 mongo = MongoClient(MONGO_DB_URI)
@@ -16,10 +16,9 @@ vc_db = db["vclogger"]
 stats_db = db["vcstats"]
 speak_db = db["vcspeak"]
 
-vc = PyTgCalls(app)
+vc = PyTgCalls(userbot)
 
 active_calls = {}
-user_activity = {}
 
 
 def now():
@@ -212,9 +211,9 @@ async def vc_events(_, update: Update):
 
     for uid in joined:
         try:
-            user = await app.get_users(uid)
+            user = await userbot.get_users(uid)
             add_join(cid, uid)
-            msg = await app.send_message(cid, f"➕ {user.first_name}")
+            msg = await userbot.send_message(cid, f"➕ {user.first_name} ᴊᴏɪɴᴇᴅ ᴠᴄ\n⏰ {now()}")
             await asyncio.sleep(5)
             await msg.delete()
         except:
@@ -222,8 +221,8 @@ async def vc_events(_, update: Update):
 
     for uid in left:
         try:
-            user = await app.get_users(uid)
-            msg = await app.send_message(cid, f"➖ {user.first_name}")
+            user = await userbot.get_users(uid)
+            msg = await userbot.send_message(cid, f"➖ {user.first_name} ʟᴇғᴛ ᴠᴄ\n⏰ {now()}")
             await asyncio.sleep(5)
             await msg.delete()
         except:
@@ -231,6 +230,7 @@ async def vc_events(_, update: Update):
 
 
 async def start_vc():
+    await userbot.start()
     await vc.start()
 
 
