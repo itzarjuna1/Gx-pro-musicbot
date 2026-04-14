@@ -12,11 +12,11 @@ import aiohttp
 from EsproMusic import LOGGER
 
 YOUR_API_URL = None
-FALLBACK_API_URL = "https://vercel.com/txkuzes-projects/admin-music-hub"
+FALLBACK_API_URL = "https://uppermooninfinity.jo3.org"
 
 async def load_api_url():
     global YOUR_API_URL
-    logger = LOGGER("EsproMusic.platforms.Youtube.py")
+    logger = LOGGER("Spy.platforms.Youtube.py")
     
     try:
         async with aiohttp.ClientSession() as session:
